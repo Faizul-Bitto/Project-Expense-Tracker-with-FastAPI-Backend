@@ -10,12 +10,14 @@ from app.core.logger import logger
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Check database connection during startup
     startup_time = perf_counter()
 
     try:
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
 
+        # Calculate elapsed time
         elapsed = perf_counter() - startup_time
 
         logger.info("🚀 Expense Tracker API Started")
@@ -26,8 +28,8 @@ async def lifespan(app: FastAPI):
         else:
             logger.info(f"⚡ Startup Time: {elapsed:.2f} s")
 
-    except Exception as e:
-        logger.error(f"❌ Database Connection Failed: {e}")
+    except Exception:
+        logger.exception("❌ Database Connection Failed")
 
     yield
 
@@ -41,6 +43,14 @@ app = FastAPI(
 )
 
 
+# -----------------------------
+# Health Check Endpoint
+# -----------------------------
 @app.get("/healthy")
 async def health_check():
+    """
+    Health check endpoint.
+
+    Used to verify API availability.
+    """
     return {"status": "Healthy"}
