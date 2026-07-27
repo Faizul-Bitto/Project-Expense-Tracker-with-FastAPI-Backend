@@ -9,6 +9,7 @@ from starlette import status
 
 from app.core.database import Base, SessionLocal, engine
 from app.core.logger import logger
+from app.core.security import bcrypt_context
 
 # Import all models so SQLAlchemy can register them
 from app.models.user import User
@@ -17,10 +18,7 @@ from app.models.expense_category import ExpenseCategory
 from app.models.expense_item import ExpenseItem
 
 # Import routers
-from app.routers import auth, users, expenses, expense_categories, analytics, admin
-
-# Password hashing
-from app.core.security import bcrypt_context
+from app.routers import admin, analytics, auth, expense_categories, expenses, users
 
 # Load environment variables
 load_dotenv()
@@ -32,6 +30,10 @@ DEFAULT_ADMIN_PASSWORD = os.getenv("DEFAULT_ADMIN_PASSWORD")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """
+    Application startup and shutdown events.
+    """
+
     startup_time = perf_counter()
 
     try:
@@ -48,47 +50,49 @@ async def lifespan(app: FastAPI):
         db = SessionLocal()
 
         try:
-            admin = db.query(User).filter(User.email == DEFAULT_ADMIN_EMAIL).first()
+            # Find the default admin
+            admin_user = db.query(User).filter(User.role == "admin").first()
 
-            if admin:
+            if admin_user:
                 updated = False
 
                 # Update name
-                if admin.name != DEFAULT_ADMIN_NAME:
-                    admin.name = DEFAULT_ADMIN_NAME
+                if admin_user.name != DEFAULT_ADMIN_NAME:
+                    admin_user.name = DEFAULT_ADMIN_NAME
                     updated = True
 
-                # Update password only if changed
+                # Update email
+                if admin_user.email != DEFAULT_ADMIN_EMAIL:
+                    admin_user.email = DEFAULT_ADMIN_EMAIL
+                    updated = True
+
+                # Update password
                 if not bcrypt_context.verify(
                     DEFAULT_ADMIN_PASSWORD,
-                    admin.password,
+                    admin_user.password,
                 ):
-                    admin.password = bcrypt_context.hash(DEFAULT_ADMIN_PASSWORD)
-                    updated = True
-
-                # Update role
-                if admin.role != "admin":
-                    admin.role = "admin"
+                    admin_user.password = bcrypt_context.hash(DEFAULT_ADMIN_PASSWORD)
                     updated = True
 
                 if updated:
                     db.commit()
-                    db.refresh(admin)
+                    db.refresh(admin_user)
+
                     logger.info("🔄 Default Admin Updated Successfully")
                 else:
                     logger.info("👤 Default Admin Already Up-to-Date")
 
             else:
-                admin = User(
+                admin_user = User(
                     name=DEFAULT_ADMIN_NAME,
                     email=DEFAULT_ADMIN_EMAIL,
                     password=bcrypt_context.hash(DEFAULT_ADMIN_PASSWORD),
                     role="admin",
                 )
 
-                db.add(admin)
+                db.add(admin_user)
                 db.commit()
-                db.refresh(admin)
+                db.refresh(admin_user)
 
                 logger.info("✅ Default Admin Created Successfully")
 
@@ -134,4 +138,7 @@ async def health_check():
 
     Used to verify API availability.
     """
-    return {"status": "Healthy"}
+
+    return {
+        "status": "Healthy",
+    }
