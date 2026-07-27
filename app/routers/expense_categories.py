@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from starlette import status
 
 from app.core.logger import logger
+from app.dependencies.authorization import admin_dependency
 from app.dependencies.database import db_dependency
 from app.models.expense_category import ExpenseCategory
 from app.schemas.expense_category import CreateExpenseCategoryRequest
@@ -14,10 +15,14 @@ router = APIRouter(
 
 @router.post("/create", status_code=status.HTTP_201_CREATED)
 async def create_expense_category(
-    db: db_dependency, create_expense_category_request: CreateExpenseCategoryRequest
+    admin: admin_dependency,
+    db: db_dependency,
+    create_expense_category_request: CreateExpenseCategoryRequest,
 ):
     """
     Create a new expense category.
+
+    Only administrators are allowed to create expense categories.
 
     Raises:
         HTTPException: If the expense category already exists.
@@ -48,7 +53,10 @@ async def create_expense_category(
     db.refresh(expense_category)
 
     logger.info(
-        f"✅ Expense Category Created | ID={expense_category.id} | Name={expense_category.name}"
+        f"✅ Expense Category Created | "
+        f"ID={expense_category.id} | "
+        f"Name={expense_category.name} | "
+        f"Created By Admin={admin['email']}"
     )
 
     return {
