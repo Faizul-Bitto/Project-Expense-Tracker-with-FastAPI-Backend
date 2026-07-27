@@ -1,6 +1,7 @@
 import os
+from typing import Annotated
 
-from fastapi import HTTPException
+from fastapi import Depends, HTTPException
 from jose import JWTError, jwt
 from starlette import status
 
@@ -46,3 +47,9 @@ async def get_current_user(token: oauth2_bearer_token_dependency):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired access token.",
         )
+
+
+user_dependency = Annotated[
+    dict,
+    Depends(get_current_user),
+]

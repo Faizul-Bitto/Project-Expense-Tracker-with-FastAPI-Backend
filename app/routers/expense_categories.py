@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from starlette import status
 
 from app.core.logger import logger
-from app.dependencies.authorization import admin_dependency
+from app.dependencies.admin import admin_dependency
 from app.dependencies.database import db_dependency
 from app.models.expense_category import ExpenseCategory
 from app.schemas.expense_category import CreateExpenseCategoryRequest
