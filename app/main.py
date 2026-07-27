@@ -5,6 +5,7 @@ from time import perf_counter
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from sqlalchemy import text
+from starlette import status
 
 from app.core.database import Base, SessionLocal, engine
 from app.core.logger import logger
@@ -12,13 +13,14 @@ from app.core.logger import logger
 # Import all models so SQLAlchemy can register them
 from app.models.user import User
 from app.models.expense import Expense
-from app.models.expense_item import ExpenseItem
 from app.models.expense_category import ExpenseCategory
+from app.models.expense_item import ExpenseItem
 
 # Import routers
-from app.routers import auth, expenses, expense_categories, users, analytics
+from app.routers import auth, users, expenses, expense_categories, analytics
 
-from starlette import status
+# Password hashing
+from app.core.security import bcrypt_context
 
 # Load environment variables
 load_dotenv()
@@ -39,11 +41,10 @@ async def lifespan(app: FastAPI):
 
         logger.info("✅ Database Connected Successfully")
 
-        # Development Only
+        # Development only
         Base.metadata.create_all(bind=engine)
         logger.info("📦 Database Tables Synchronized")
 
-        # Create or Update Default Admin
         db = SessionLocal()
 
         try:
@@ -52,14 +53,20 @@ async def lifespan(app: FastAPI):
             if admin:
                 updated = False
 
+                # Update name
                 if admin.name != DEFAULT_ADMIN_NAME:
                     admin.name = DEFAULT_ADMIN_NAME
                     updated = True
 
-                if admin.password != DEFAULT_ADMIN_PASSWORD:
-                    admin.password = DEFAULT_ADMIN_PASSWORD
+                # Update password only if changed
+                if not bcrypt_context.verify(
+                    DEFAULT_ADMIN_PASSWORD,
+                    admin.password,
+                ):
+                    admin.password = bcrypt_context.hash(DEFAULT_ADMIN_PASSWORD)
                     updated = True
 
+                # Update role
                 if admin.role != "admin":
                     admin.role = "admin"
                     updated = True
@@ -75,7 +82,7 @@ async def lifespan(app: FastAPI):
                 admin = User(
                     name=DEFAULT_ADMIN_NAME,
                     email=DEFAULT_ADMIN_EMAIL,
-                    password=DEFAULT_ADMIN_PASSWORD,
+                    password=bcrypt_context.hash(DEFAULT_ADMIN_PASSWORD),
                     role="admin",
                 )
 
@@ -111,7 +118,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Register Routers
+# Register routers
 app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(expense_categories.router)
