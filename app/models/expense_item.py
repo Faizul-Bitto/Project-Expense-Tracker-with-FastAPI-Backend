@@ -9,7 +9,9 @@ class ExpenseItem(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     expense_id = Column(Integer, ForeignKey("expenses.id"), nullable=False)
-    category_id = Column(Integer, ForeignKey("expense_categories.id"), nullable=False)
+    expense_category_id = Column(
+        Integer, ForeignKey("expense_categories.id"), nullable=False
+    )
     description = Column(String(255), nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)
 
