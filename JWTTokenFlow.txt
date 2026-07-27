@@ -1,0 +1,28 @@
+User Login
+     │
+     ▼
+User enters Email & Password
+     │
+     ▼
+Find the User in the Database
+     │
+     ▼
+Verify the Password
+     │
+     ▼
+Generate a JWT Access Token
+     │
+     ▼
+Return the Token to the User
+     │
+     ▼
+User sends the Token with every protected request
+     │
+     ▼
+Backend Decodes and Verifies the Token
+     │
+     ▼
+Is the Token Valid?
+     │
+     ├── Yes → Allow the Request
+     └── No  → Return 401 Unauthorized
