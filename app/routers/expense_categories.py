@@ -22,6 +22,7 @@ async def create_expense_category(
     Raises:
         HTTPException: If the expense category already exists.
     """
+
     existing_expense_category = (
         db.query(ExpenseCategory)
         .filter(ExpenseCategory.name == create_expense_category_request.name)
