@@ -10,10 +10,15 @@ from app.core.database import Base, SessionLocal, engine
 from app.core.logger import logger
 
 # Import all models so SQLAlchemy can register them
-from app.models.expense import Expense
-from app.models.expense_category import ExpenseCategory
-from app.models.expense_item import ExpenseItem
 from app.models.user import User
+from app.models.expense import Expense
+from app.models.expense_item import ExpenseItem
+from app.models.expense_category import ExpenseCategory
+
+# Import routers
+from app.routers import auth, expenses, expense_categories, users, analytics
+
+from starlette import status
 
 # Load environment variables
 load_dotenv()
@@ -34,11 +39,11 @@ async def lifespan(app: FastAPI):
 
         logger.info("✅ Database Connected Successfully")
 
-        # Create all database tables (Development only)
+        # Development Only
         Base.metadata.create_all(bind=engine)
         logger.info("📦 Database Tables Synchronized")
 
-        # Create or Update Default Admin User
+        # Create or Update Default Admin
         db = SessionLocal()
 
         try:
@@ -83,7 +88,6 @@ async def lifespan(app: FastAPI):
         finally:
             db.close()
 
-        # Calculate startup time
         elapsed = perf_counter() - startup_time
 
         logger.info("🚀 Expense Tracker API Started")
@@ -107,8 +111,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Register Routers
+app.include_router(users.router)
+app.include_router(auth.router)
+app.include_router(expense_categories.router)
+app.include_router(expenses.router)
+app.include_router(analytics.router)
 
-@app.get("/healthy")
+
+@app.get("/healthy", tags=["API Health"], status_code=status.HTTP_200_OK)
 async def health_check():
     """
     Health check endpoint.
