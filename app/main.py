@@ -17,7 +17,7 @@ from app.models.expense_category import ExpenseCategory
 from app.models.expense_item import ExpenseItem
 
 # Import routers
-from app.routers import auth, users, expenses, expense_categories, analytics
+from app.routers import auth, users, expenses, expense_categories, analytics, admin
 
 # Password hashing
 from app.core.security import bcrypt_context
@@ -124,6 +124,7 @@ app.include_router(auth.router)
 app.include_router(expense_categories.router)
 app.include_router(expenses.router)
 app.include_router(analytics.router)
+app.include_router(admin.router)
 
 
 @app.get("/healthy", tags=["API Health"], status_code=status.HTTP_200_OK)
