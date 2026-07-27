@@ -19,7 +19,8 @@ async def create_expense_category(
     """
     Create a new expense category.
 
-    Checks if the category already exists before saving.
+    Raises:
+        HTTPException: If the expense category already exists.
     """
     existing_expense_category = (
         db.query(ExpenseCategory)
@@ -29,12 +30,12 @@ async def create_expense_category(
 
     if existing_expense_category:
         logger.warning(
-            f"⚠️ Expense Category Creation Failed | Category={create_expense_category_request.name} already exists."
+            f"⚠️ Expense Category Creation Failed | Name={create_expense_category_request.name} already exists."
         )
 
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Expense Category already exists.",
+            detail="Expense category already exists.",
         )
 
     expense_category = ExpenseCategory(
@@ -46,12 +47,12 @@ async def create_expense_category(
     db.refresh(expense_category)
 
     logger.info(
-        f"✅ Expense Category Created | Category={create_expense_category_request.name}"
+        f"✅ Expense Category Created | ID={expense_category.id} | Name={expense_category.name}"
     )
 
     return {
-        "message": "Expense Category Created successfully.",
-        "expense_category": {
+        "message": "Expense category created successfully.",
+        "data": {
             "id": expense_category.id,
             "name": expense_category.name,
         },
