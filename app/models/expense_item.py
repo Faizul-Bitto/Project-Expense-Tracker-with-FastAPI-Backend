@@ -8,10 +8,25 @@ class ExpenseItem(Base):
     __tablename__ = "expense_items"
 
     id = Column(Integer, primary_key=True, index=True)
-    expense_id = Column(Integer, ForeignKey("expenses.id"), nullable=False)
-    expense_category_id = Column(
-        Integer, ForeignKey("expense_categories.id"), nullable=False
+
+    expense_id = Column(
+        Integer,
+        ForeignKey(
+            "expenses.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
     )
+
+    expense_category_id = Column(
+        Integer,
+        ForeignKey(
+            "expense_categories.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+    )
+
     description = Column(String(255), nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)
 
