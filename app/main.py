@@ -43,7 +43,6 @@ async def lifespan(app: FastAPI):
 
         logger.info("✅ Database Connected Successfully")
 
-        # Development only
         Base.metadata.create_all(bind=engine)
         logger.info("📦 Database Tables Synchronized")
 
