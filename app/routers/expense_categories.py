@@ -39,7 +39,7 @@ async def get_expense_categories(user: user_dependency, db: db_dependency):
 
 
 @router.get("/{category_id}", status_code=status.HTTP_200_OK)
-async def get_expense_category(
+async def get_expense_category_by_id(
     user: user_dependency, db: db_dependency, category_id: int = Path(gt=0)
 ):
     """
