@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Path
 from starlette import status
 
 from app.core.logger import logger
@@ -35,4 +35,41 @@ async def get_expense_categories(user: user_dependency, db: db_dependency):
             }
             for category in expense_categories
         ],
+    }
+
+
+@router.get("/{category_id}", status_code=status.HTTP_200_OK)
+async def get_expense_category(
+    user: user_dependency, db: db_dependency, category_id: int = Path(gt=0)
+):
+    """
+    Retrieve an expense category by its ID.
+    """
+
+    expense_category = (
+        db.query(ExpenseCategory).filter(ExpenseCategory.id == category_id).first()
+    )
+
+    if not expense_category:
+        logger.warning(
+            f"⚠️ Expense Category Retrieval Failed | ID={category_id} not found."
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Expense category not found.",
+        )
+
+    logger.info(
+        f"📂 Expense Category Retrieved | "
+        f"ID={expense_category.id} | "
+        f"User={user.email}"
+    )
+
+    return {
+        "message": "Expense category retrieved successfully.",
+        "expense_category": {
+            "id": expense_category.id,
+            "name": expense_category.name,
+        },
     }
