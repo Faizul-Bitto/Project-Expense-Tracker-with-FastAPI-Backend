@@ -20,7 +20,9 @@ async def get_profile(user: user_dependency):
     Retrieve the authenticated user's profile.
     """
 
-    logger.info(f"👤 Profile Retrieved | ID={user.id} | Email={user.email}")
+    logger.info(
+        f"👤 Profile Retrieved | ID={user.id} | Email={user.email} | Role={user.role}"
+    )
 
     return {
         "message": "User profile retrieved successfully.",
@@ -33,44 +35,7 @@ async def get_profile(user: user_dependency):
     }
 
 
-@router.put("/me/update_password", status_code=status.HTTP_200_OK)
-async def update_password(
-    user: user_dependency,
-    db: db_dependency,
-    update_password_request: UserUpdatePasswordRequest,
-):
-    """
-    Update the authenticated user's password.
-    """
-
-    if not bcrypt_context.verify(
-        update_password_request.password,
-        user.password,
-    ):
-        logger.warning(
-            f"⚠️ Password Update Failed | Incorrect Password | Email={user.email}"
-        )
-
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Current password is incorrect.",
-        )
-
-    user.password = bcrypt_context.hash(
-        update_password_request.new_password,
-    )
-
-    db.commit()
-    db.refresh(user)
-
-    logger.info(f"🔐 Password Updated | ID={user.id} | Email={user.email}")
-
-    return {
-        "message": "Password updated successfully.",
-    }
-
-
-@router.put("/me/update_profile", status_code=status.HTTP_200_OK)
+@router.put("/me", status_code=status.HTTP_200_OK)
 async def update_profile(
     user: user_dependency,
     db: db_dependency,
@@ -103,7 +68,9 @@ async def update_profile(
     db.commit()
     db.refresh(user)
 
-    logger.info(f"✅ Profile Updated | ID={user.id} | Email={user.email}")
+    logger.info(
+        f"✅ Profile Updated | ID={user.id} | Email={user.email} | Role={user.role}"
+    )
 
     return {
         "message": "Profile updated successfully.",
@@ -113,4 +80,43 @@ async def update_profile(
             "email": user.email,
             "role": user.role,
         },
+    }
+
+
+@router.put("/me/password", status_code=status.HTTP_200_OK)
+async def update_password(
+    user: user_dependency,
+    db: db_dependency,
+    update_password_request: UserUpdatePasswordRequest,
+):
+    """
+    Update the authenticated user's password.
+    """
+
+    if not bcrypt_context.verify(
+        update_password_request.password,
+        user.password,
+    ):
+        logger.warning(
+            f"⚠️ Password Update Failed | Incorrect Password | Email={user.email} | Role={user.role}"
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Current password is incorrect.",
+        )
+
+    user.password = bcrypt_context.hash(
+        update_password_request.new_password,
+    )
+
+    db.commit()
+    db.refresh(user)
+
+    logger.info(
+        f"🔐 Password Updated | ID={user.id} | Email={user.email} | Role={user.role}"
+    )
+
+    return {
+        "message": "Password updated successfully.",
     }
