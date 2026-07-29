@@ -2,18 +2,211 @@ from fastapi import APIRouter, HTTPException, Path
 from starlette import status
 
 from app.core.logger import logger
+from app.core.security import bcrypt_context
 from app.dependencies.admin import admin_dependency
 from app.dependencies.database import db_dependency
 from app.models.expense_category import ExpenseCategory
+from app.models.user import User
 from app.schemas.expense_category import (
     CreateExpenseCategoryRequest,
     UpdateExpenseCategoryRequest,
 )
+from app.schemas.admin import AdminCreateUserRequest, AdminUpdateUserRequest
 
 router = APIRouter(
     prefix="/admin",
     tags=["Admin"],
 )
+
+
+# --------------------------
+# Users
+# --------------------------
+@router.post("/users", status_code=status.HTTP_201_CREATED)
+async def create_user(
+    admin: admin_dependency,
+    db: db_dependency,
+    create_user_request: AdminCreateUserRequest,
+):
+    """
+    Create a new user.
+
+    Only administrators are allowed to create users.
+
+    Raises:
+        HTTPException: If the email is already registered.
+    """
+
+    existing_user = (
+        db.query(User).filter(User.email == create_user_request.email).first()
+    )
+
+    if existing_user:
+        logger.warning(
+            f"⚠️ User Creation Failed | "
+            f"Email={create_user_request.email} already exists."
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email already registered.",
+        )
+
+    user = User(
+        name=create_user_request.name,
+        email=create_user_request.email,
+        password=bcrypt_context.hash(create_user_request.password),
+        role=create_user_request.role,
+    )
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    logger.info(
+        f"✅ User Created | "
+        f"ID={user.id} | "
+        f"Email={user.email} | "
+        f"Role={user.role} | "
+        f"Created By Admin={admin.email}"
+    )
+
+    return {
+        "message": "User created successfully.",
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role,
+        },
+    }
+
+
+@router.put("/users/{user_id}", status_code=status.HTTP_200_OK)
+async def update_user(
+    admin: admin_dependency,
+    db: db_dependency,
+    update_user_request: AdminUpdateUserRequest,
+    user_id: int = Path(gt=0),
+):
+    """
+    Update an existing user.
+
+    Only administrators are allowed to update users.
+
+    Raises:
+        HTTPException:
+            - If the user does not exist.
+            - If the email is already registered by another user.
+    """
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        logger.warning(f"⚠️ User Update Failed | " f"ID={user_id} not found.")
+
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+
+    existing_user = (
+        db.query(User)
+        .filter(User.email == update_user_request.email)
+        .filter(User.id != user_id)
+        .first()
+    )
+
+    if existing_user:
+        logger.warning(
+            f"⚠️ User Update Failed | "
+            f"Email={update_user_request.email} already exists."
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email already registered.",
+        )
+
+    user.name = update_user_request.name
+    user.email = update_user_request.email
+    user.password = bcrypt_context.hash(update_user_request.password)
+    user.role = update_user_request.role
+
+    db.commit()
+    db.refresh(user)
+
+    logger.info(
+        f"✅ User Updated | "
+        f"ID={user.id} | "
+        f"Email={user.email} | "
+        f"Role={user.role} | "
+        f"Updated By Admin={admin.email}"
+    )
+
+    return {
+        "message": "User updated successfully.",
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role,
+        },
+    }
+
+
+@router.delete("/users/{user_id}", status_code=status.HTTP_200_OK)
+async def delete_user(
+    admin: admin_dependency,
+    db: db_dependency,
+    user_id: int = Path(gt=0),
+):
+    """
+    Delete an existing user.
+
+    Only administrators are allowed to delete users.
+
+    Raises:
+        HTTPException:
+            - If the user does not exist.
+            - If the administrator attempts to delete their own account.
+    """
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        logger.warning(f"⚠️ User Deletion Failed | " f"ID={user_id} not found.")
+
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+
+    if admin.id == user.id:
+        logger.warning(
+            f"⚠️ User Deletion Failed | "
+            f"Admin={admin.email} attempted to delete their own account."
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You cannot delete your own account.",
+        )
+
+    db.delete(user)
+    db.commit()
+
+    logger.info(
+        f"🗑️ User Deleted | "
+        f"ID={user.id} | "
+        f"Email={user.email} | "
+        f"Role={user.role} | "
+        f"Deleted By Admin={admin.email}"
+    )
+
+    return {
+        "message": "User deleted successfully.",
+    }
 
 
 # --------------------------
@@ -63,7 +256,7 @@ async def create_expense_category(
         f"✅ Expense Category Created | "
         f"ID={expense_category.id} | "
         f"Name={expense_category.name} | "
-        f"Admin={admin.email}"
+        f"Created By Admin={admin.email}"
     )
 
     return {
@@ -133,7 +326,7 @@ async def update_expense_category(
         f"✅ Expense Category Updated | "
         f"ID={expense_category.id} | "
         f"Name={expense_category.name} | "
-        f"Admin={admin.email}"
+        f"Updated By Admin={admin.email}"
     )
 
     return {
@@ -181,7 +374,7 @@ async def delete_expense_category(
         f"🗑️ Expense Category Deleted | "
         f"ID={expense_category.id} | "
         f"Name={expense_category.name} | "
-        f"Admin={admin.email}"
+        f"Deleted By Admin={admin.email}"
     )
 
     return {
