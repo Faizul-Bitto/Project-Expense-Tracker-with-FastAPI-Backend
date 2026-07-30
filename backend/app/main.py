@@ -18,7 +18,7 @@ from app.models.expense_category import ExpenseCategory
 from app.models.expense_item import ExpenseItem
 from app.models.password_reset import PasswordReset
 
-# Import routers
+# Import user routers
 from app.routers import (
     analytics,
     auth,
@@ -27,8 +27,9 @@ from app.routers import (
     users,
 )
 
-# Admin routers
+# Import admin routers
 from app.routers.admin import (
+    analytics as admin_analytics,
     expense_categories as admin_expense_categories,
     expenses as admin_expenses,
     users as admin_users,
@@ -36,6 +37,7 @@ from app.routers.admin import (
 
 # Load environment variables
 load_dotenv()
+
 
 DEFAULT_ADMIN_NAME = os.getenv("DEFAULT_ADMIN_NAME")
 DEFAULT_ADMIN_EMAIL = os.getenv("DEFAULT_ADMIN_EMAIL")
@@ -51,15 +53,18 @@ async def lifespan(app: FastAPI):
     startup_time = perf_counter()
 
     try:
-        # Check database connection
+        # Check Database Connection
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
 
         logger.info("✅ Database Connected Successfully")
 
+        # Synchronize Database Tables
         Base.metadata.create_all(bind=engine)
+
         logger.info("📦 Database Tables Synchronized")
 
+        # Default Admin Setup
         db = SessionLocal()
 
         try:
@@ -112,6 +117,7 @@ async def lifespan(app: FastAPI):
         finally:
             db.close()
 
+        # Startup Completed
         elapsed = perf_counter() - startup_time
 
         logger.info("🚀 Expense Tracker API Started")
@@ -126,6 +132,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    # Application Shutdown
     logger.info("🛑 Application Shutdown")
 
 
@@ -136,10 +143,9 @@ app = FastAPI(
 )
 
 
-# --------------------------
-# Register User Routers
-# --------------------------
-
+# ==========================================================
+# User Routers
+# ==========================================================
 app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(expense_categories.router)
@@ -147,15 +153,18 @@ app.include_router(expenses.router)
 app.include_router(analytics.router)
 
 
-# --------------------------
-# Register Admin Routers
-# --------------------------
-
+# ==========================================================
+# Admin Routers
+# ==========================================================
 app.include_router(admin_users.router)
 app.include_router(admin_expense_categories.router)
 app.include_router(admin_expenses.router)
+app.include_router(admin_analytics.router)
 
 
+# ==========================================================
+# API Health
+# ==========================================================
 @app.get(
     "/healthy",
     tags=["API Health"],
