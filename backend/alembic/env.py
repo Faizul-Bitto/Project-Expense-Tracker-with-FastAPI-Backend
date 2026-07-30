@@ -12,6 +12,7 @@ from app.models.user import User
 from app.models.expense import Expense
 from app.models.expense_category import ExpenseCategory
 from app.models.expense_item import ExpenseItem
+from app.models.password_reset import PasswordReset
 
 # Load environment variables
 load_dotenv()
