@@ -1,5 +1,6 @@
-from datetime import datetime, timedelta, timezone
 import os
+import secrets
+from datetime import datetime, timedelta, timezone
 
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
@@ -56,3 +57,26 @@ def create_access_token(email: str, user_id: int, role: str, expires_delta: time
         SECRET_KEY,
         algorithm=ALGORITHM,
     )
+
+
+def generate_otp() -> str:
+    """
+    Generate a secure 6-digit OTP.
+    """
+
+    return f"{secrets.randbelow(1_000_000):06d}"
+
+
+def generate_temporary_password(length: int = 12) -> str:
+    """
+    Generate a secure temporary password.
+    """
+
+    characters = (
+        "abcdefghijklmnopqrstuvwxyz"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "0123456789"
+        "!@#$%^&*"
+    )
+
+    return "".join(secrets.choice(characters) for _ in range(length))
