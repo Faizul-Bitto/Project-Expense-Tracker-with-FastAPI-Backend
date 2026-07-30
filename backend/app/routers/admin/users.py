@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Path
+from fastapi import APIRouter, HTTPException, Path, Query
 from starlette import status
 
 from app.core.email import render_email_template, send_email
@@ -33,7 +33,7 @@ async def get_all_users(
     Admin users are excluded from the response.
     """
 
-    users = db.query(User).filter(User.role != "admin").all()
+    users = db.query(User).filter(User.role != "admin").order_by(User.id.desc()).all()
 
     logger.info(
         f"👥 Users Retrieved | "
@@ -56,6 +56,65 @@ async def get_all_users(
     }
 
 
+@router.get("/search", status_code=status.HTTP_200_OK)
+async def search_users(
+    admin: admin_dependency,
+    db: db_dependency,
+    query: str = Query(
+        min_length=1,
+        description="Search users by name or email.",
+    ),
+):
+    """
+    Search non-admin users by name or email.
+
+    The search is case-insensitive and supports
+    partial name or email matching.
+    """
+
+    search_query = query.strip()
+
+    if not search_query:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Search query cannot be empty.",
+        )
+
+    users = (
+        db.query(User)
+        .filter(
+            User.role != "admin",
+            (
+                User.name.ilike(f"%{search_query}%")
+                | User.email.ilike(f"%{search_query}%")
+            ),
+        )
+        .order_by(User.id.desc())
+        .all()
+    )
+
+    logger.info(
+        f"🔎 Users Searched | "
+        f"Query={search_query} | "
+        f"Count={len(users)} | "
+        f"Searched By Admin={admin.email}"
+    )
+
+    return {
+        "message": "Users search completed successfully.",
+        "users": [
+            {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email,
+                "password": user.password,
+                "role": user.role,
+            }
+            for user in users
+        ],
+    }
+
+
 @router.get("/{user_id}", status_code=status.HTTP_200_OK)
 async def get_user(
     admin: admin_dependency,
@@ -63,17 +122,24 @@ async def get_user(
     user_id: int = Path(gt=0),
 ):
     """
-    Get a specific user by ID.
+    Get a specific non-admin user by ID.
 
     Only administrators are allowed to view user details.
     """
 
-    user = db.query(User).filter(User.id == user_id).first()
+    user = (
+        db.query(User)
+        .filter(
+            User.id == user_id,
+            User.role != "admin",
+        )
+        .first()
+    )
 
     if not user:
         logger.warning(
             f"⚠️ User Retrieval Failed | "
-            f"ID={user_id} not found | "
+            f"ID={user_id} not found or is an admin | "
             f"Requested By Admin={admin.email}"
         )
 
@@ -111,9 +177,6 @@ async def create_user(
     Create a new user.
 
     Only administrators are allowed to create users.
-
-    Raises:
-        HTTPException: If the email is already registered.
     """
 
     existing_user = (
@@ -156,6 +219,7 @@ async def create_user(
             "id": user.id,
             "name": user.name,
             "email": user.email,
+            "password": user.password,
             "role": user.role,
         },
     }
@@ -174,10 +238,19 @@ async def update_user(
     Only administrators are allowed to update users.
     """
 
-    user = db.query(User).filter(User.id == user_id).first()
+    user = (
+        db.query(User)
+        .filter(
+            User.id == user_id,
+            User.role != "admin",
+        )
+        .first()
+    )
 
     if not user:
-        logger.warning(f"⚠️ User Update Failed | " f"ID={user_id} not found.")
+        logger.warning(
+            f"⚠️ User Update Failed | " f"ID={user_id} not found or is an admin."
+        )
 
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -186,8 +259,10 @@ async def update_user(
 
     existing_user = (
         db.query(User)
-        .filter(User.email == update_user_request.email)
-        .filter(User.id != user_id)
+        .filter(
+            User.email == update_user_request.email,
+            User.id != user_id,
+        )
         .first()
     )
 
@@ -224,6 +299,7 @@ async def update_user(
             "id": user.id,
             "name": user.name,
             "email": user.email,
+            "password": user.password,
             "role": user.role,
         },
     }
@@ -243,12 +319,19 @@ async def reset_user_password(
     user's registered email address.
     """
 
-    user = db.query(User).filter(User.id == user_id).first()
+    user = (
+        db.query(User)
+        .filter(
+            User.id == user_id,
+            User.role != "admin",
+        )
+        .first()
+    )
 
     if not user:
         logger.warning(
             f"⚠️ User Password Reset Failed | "
-            f"ID={user_id} not found | "
+            f"ID={user_id} not found or is an admin | "
             f"Requested By Admin={admin.email}"
         )
 
@@ -290,6 +373,13 @@ async def reset_user_password(
 
     return {
         "message": "User password reset successfully.",
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "password": user.password,
+            "role": user.role,
+        },
     }
 
 
@@ -305,10 +395,19 @@ async def delete_user(
     Administrators cannot delete their own account.
     """
 
-    user = db.query(User).filter(User.id == user_id).first()
+    user = (
+        db.query(User)
+        .filter(
+            User.id == user_id,
+            User.role != "admin",
+        )
+        .first()
+    )
 
     if not user:
-        logger.warning(f"⚠️ User Deletion Failed | " f"ID={user_id} not found.")
+        logger.warning(
+            f"⚠️ User Deletion Failed | " f"ID={user_id} not found or is an admin."
+        )
 
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
