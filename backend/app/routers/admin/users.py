@@ -9,27 +9,19 @@ from app.core.security import (
 )
 from app.dependencies.admin import admin_dependency
 from app.dependencies.database import db_dependency
-from app.models.expense_category import ExpenseCategory
 from app.models.user import User
 from app.schemas.admin import (
     AdminCreateUserRequest,
     AdminUpdateUserRequest,
 )
-from app.schemas.expense_category import (
-    CreateExpenseCategoryRequest,
-    UpdateExpenseCategoryRequest,
-)
 
 router = APIRouter(
-    prefix="/admin",
-    tags=["Admin"],
+    prefix="/admin/users",
+    tags=["Admin - Users"],
 )
 
 
-# --------------------------
-# Users
-# --------------------------
-@router.get("/users", status_code=status.HTTP_200_OK)
+@router.get("", status_code=status.HTTP_200_OK)
 async def get_all_users(
     admin: admin_dependency,
     db: db_dependency,
@@ -64,7 +56,7 @@ async def get_all_users(
     }
 
 
-@router.get("/users/{user_id}", status_code=status.HTTP_200_OK)
+@router.get("/{user_id}", status_code=status.HTTP_200_OK)
 async def get_user(
     admin: admin_dependency,
     db: db_dependency,
@@ -74,10 +66,6 @@ async def get_user(
     Get a specific user by ID.
 
     Only administrators are allowed to view user details.
-    Password is never returned in the response.
-
-    Raises:
-        HTTPException: If the user does not exist.
     """
 
     user = db.query(User).filter(User.id == user_id).first()
@@ -113,7 +101,7 @@ async def get_user(
     }
 
 
-@router.post("/users", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED)
 async def create_user(
     admin: admin_dependency,
     db: db_dependency,
@@ -173,7 +161,7 @@ async def create_user(
     }
 
 
-@router.put("/users/{user_id}", status_code=status.HTTP_200_OK)
+@router.put("/{user_id}", status_code=status.HTTP_200_OK)
 async def update_user(
     admin: admin_dependency,
     db: db_dependency,
@@ -184,11 +172,6 @@ async def update_user(
     Update an existing user.
 
     Only administrators are allowed to update users.
-
-    Raises:
-        HTTPException:
-            - If the user does not exist.
-            - If the email is already registered by another user.
     """
 
     user = db.query(User).filter(User.id == user_id).first()
@@ -246,7 +229,7 @@ async def update_user(
     }
 
 
-@router.post("/users/{user_id}/reset-password", status_code=status.HTTP_200_OK)
+@router.post("/{user_id}/reset-password", status_code=status.HTTP_200_OK)
 async def reset_user_password(
     admin: admin_dependency,
     db: db_dependency,
@@ -255,13 +238,9 @@ async def reset_user_password(
     """
     Reset a user's password.
 
-    A secure temporary password is generated, stored as a bcrypt hash,
-    and sent to the user's registered email address.
-
-    Only administrators are allowed to reset user passwords.
-
-    Raises:
-        HTTPException: If the user does not exist.
+    A secure temporary password is generated,
+    stored as a bcrypt hash, and sent to the
+    user's registered email address.
     """
 
     user = db.query(User).filter(User.id == user_id).first()
@@ -314,7 +293,7 @@ async def reset_user_password(
     }
 
 
-@router.delete("/users/{user_id}", status_code=status.HTTP_200_OK)
+@router.delete("/{user_id}", status_code=status.HTTP_200_OK)
 async def delete_user(
     admin: admin_dependency,
     db: db_dependency,
@@ -323,12 +302,7 @@ async def delete_user(
     """
     Delete an existing user.
 
-    Only administrators are allowed to delete users.
-
-    Raises:
-        HTTPException:
-            - If the user does not exist.
-            - If the administrator attempts to delete their own account.
+    Administrators cannot delete their own account.
     """
 
     user = db.query(User).filter(User.id == user_id).first()
@@ -344,7 +318,8 @@ async def delete_user(
     if admin.id == user.id:
         logger.warning(
             f"⚠️ User Deletion Failed | "
-            f"Admin={admin.email} attempted to delete their own account."
+            f"Admin={admin.email} attempted to delete "
+            f"their own account."
         )
 
         raise HTTPException(
@@ -365,177 +340,4 @@ async def delete_user(
 
     return {
         "message": "User deleted successfully.",
-    }
-
-
-# --------------------------
-# Expense Categories
-# --------------------------
-@router.post("/expense-categories", status_code=status.HTTP_201_CREATED)
-async def create_expense_category(
-    admin: admin_dependency,
-    db: db_dependency,
-    create_expense_category_request: CreateExpenseCategoryRequest,
-):
-    """
-    Create a new expense category.
-
-    Only administrators are allowed to create expense categories.
-
-    Raises:
-        HTTPException: If the expense category already exists.
-    """
-
-    existing_expense_category = (
-        db.query(ExpenseCategory)
-        .filter(ExpenseCategory.name == create_expense_category_request.name)
-        .first()
-    )
-
-    if existing_expense_category:
-        logger.warning(
-            f"⚠️ Expense Category Creation Failed | "
-            f"Name={create_expense_category_request.name} already exists."
-        )
-
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Expense category already exists.",
-        )
-
-    expense_category = ExpenseCategory(
-        name=create_expense_category_request.name,
-    )
-
-    db.add(expense_category)
-    db.commit()
-    db.refresh(expense_category)
-
-    logger.info(
-        f"✅ Expense Category Created | "
-        f"ID={expense_category.id} | "
-        f"Name={expense_category.name} | "
-        f"Created By Admin={admin.email}"
-    )
-
-    return {
-        "message": "Expense category created successfully.",
-        "expense_category": {
-            "id": expense_category.id,
-            "name": expense_category.name,
-        },
-    }
-
-
-@router.put("/expense-categories/{category_id}", status_code=status.HTTP_200_OK)
-async def update_expense_category(
-    admin: admin_dependency,
-    db: db_dependency,
-    update_expense_category_request: UpdateExpenseCategoryRequest,
-    category_id: int = Path(gt=0),
-):
-    """
-    Update an existing expense category.
-
-    Only administrators are allowed to update expense categories.
-
-    Raises:
-        HTTPException: If the expense category does not exist or
-        another category already uses the requested name.
-    """
-
-    expense_category = (
-        db.query(ExpenseCategory).filter(ExpenseCategory.id == category_id).first()
-    )
-
-    if not expense_category:
-        logger.warning(
-            f"⚠️ Expense Category Update Failed | " f"ID={category_id} not found."
-        )
-
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Expense category not found.",
-        )
-
-    existing_expense_category = (
-        db.query(ExpenseCategory)
-        .filter(ExpenseCategory.name == update_expense_category_request.name)
-        .filter(ExpenseCategory.id != category_id)
-        .first()
-    )
-
-    if existing_expense_category:
-        logger.warning(
-            f"⚠️ Expense Category Update Failed | "
-            f"Name={update_expense_category_request.name} already exists."
-        )
-
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Expense category already exists.",
-        )
-
-    expense_category.name = update_expense_category_request.name
-
-    db.commit()
-    db.refresh(expense_category)
-
-    logger.info(
-        f"✅ Expense Category Updated | "
-        f"ID={expense_category.id} | "
-        f"Name={expense_category.name} | "
-        f"Updated By Admin={admin.email}"
-    )
-
-    return {
-        "message": "Expense category updated successfully.",
-        "expense_category": {
-            "id": expense_category.id,
-            "name": expense_category.name,
-        },
-    }
-
-
-@router.delete("/expense-categories/{category_id}", status_code=status.HTTP_200_OK)
-async def delete_expense_category(
-    admin: admin_dependency,
-    db: db_dependency,
-    category_id: int = Path(gt=0),
-):
-    """
-    Delete an existing expense category.
-
-    Only administrators are allowed to delete expense categories.
-
-    Raises:
-        HTTPException: If the expense category does not exist.
-    """
-
-    expense_category = (
-        db.query(ExpenseCategory).filter(ExpenseCategory.id == category_id).first()
-    )
-
-    if not expense_category:
-        logger.warning(
-            f"⚠️ Expense Category Deletion Failed | " f"ID={category_id} not found."
-        )
-
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Expense category not found.",
-        )
-
-    db.delete(expense_category)
-    db.commit()
-
-    logger.info(
-        f"🗑️ Expense Category Deleted | "
-        f"ID={expense_category.id} | "
-        f"Name={expense_category.name} | "
-        f"Deleted By Admin={admin.email}"
-    )
-
-    return {
-        "message": "Expense category deleted successfully.",
     }

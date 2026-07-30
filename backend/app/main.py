@@ -19,7 +19,20 @@ from app.models.expense_item import ExpenseItem
 from app.models.password_reset import PasswordReset
 
 # Import routers
-from app.routers import admin, analytics, auth, expense_categories, expenses, users
+from app.routers import (
+    analytics,
+    auth,
+    expense_categories,
+    expenses,
+    users,
+)
+
+# Admin routers
+from app.routers.admin import (
+    expense_categories as admin_expense_categories,
+    expenses as admin_expenses,
+    users as admin_users,
+)
 
 # Load environment variables
 load_dotenv()
@@ -122,16 +135,32 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Register routers
+
+# --------------------------
+# Register User Routers
+# --------------------------
+
 app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(expense_categories.router)
 app.include_router(expenses.router)
 app.include_router(analytics.router)
-app.include_router(admin.router)
 
 
-@app.get("/healthy", tags=["API Health"], status_code=status.HTTP_200_OK)
+# --------------------------
+# Register Admin Routers
+# --------------------------
+
+app.include_router(admin_users.router)
+app.include_router(admin_expense_categories.router)
+app.include_router(admin_expenses.router)
+
+
+@app.get(
+    "/healthy",
+    tags=["API Health"],
+    status_code=status.HTTP_200_OK,
+)
 async def health_check():
     """
     Health check endpoint.

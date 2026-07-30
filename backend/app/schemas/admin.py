@@ -1,4 +1,8 @@
+from datetime import date
+
 from pydantic import BaseModel, EmailStr, Field
+
+from app.schemas.expense_item import ExpenseItemRequest
 
 
 class AdminCreateUserRequest(BaseModel):
@@ -13,3 +17,19 @@ class AdminUpdateUserRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=6)
     role: str
+
+
+class AdminCreateExpenseRequest(BaseModel):
+    date: date
+
+    items: list[ExpenseItemRequest] = Field(
+        min_length=1,
+    )
+
+
+class AdminUpdateExpenseRequest(BaseModel):
+    date: date
+
+    items: list[ExpenseItemRequest] = Field(
+        min_length=1,
+    )

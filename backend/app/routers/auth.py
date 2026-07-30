@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, HTTPException
 from starlette import status
@@ -28,7 +28,21 @@ router = APIRouter(
     tags=["Authentication"],
 )
 
+
+# --------------------------
+# Authentication Settings
+# --------------------------
+
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
+
+PASSWORD_RESET_OTP_EXPIRE_MINUTES = int(
+    os.getenv("PASSWORD_RESET_OTP_EXPIRE_MINUTES", 10)
+)
+
+
+# --------------------------
+# Register
+# --------------------------
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
@@ -49,7 +63,8 @@ async def create_user(db: db_dependency, create_user_request: CreateUserRequest)
 
     if existing_user:
         logger.warning(
-            f"⚠️ Registration Failed | Email={create_user_request.email} already exists."
+            f"⚠️ Registration Failed | "
+            f"Email={create_user_request.email} already exists."
         )
 
         raise HTTPException(
@@ -68,7 +83,10 @@ async def create_user(db: db_dependency, create_user_request: CreateUserRequest)
     db.refresh(user)
 
     logger.info(
-        f"✅ User Registered | ID={user.id} | Email={user.email} | Role={user.role}"
+        f"✅ User Registered | "
+        f"ID={user.id} | "
+        f"Email={user.email} | "
+        f"Role={user.role}"
     )
 
     return {
@@ -80,6 +98,11 @@ async def create_user(db: db_dependency, create_user_request: CreateUserRequest)
             "role": user.role,
         },
     }
+
+
+# --------------------------
+# Login
+# --------------------------
 
 
 @router.post("/login", response_model=Token, status_code=status.HTTP_200_OK)
@@ -98,7 +121,7 @@ async def login(form_data: login_token_field_dependency, db: db_dependency):
     )
 
     if not user:
-        logger.warning(f"❌ Login Failed | Email={form_data.username}")
+        logger.warning(f"❌ Login Failed | " f"Email={form_data.username}")
 
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -113,7 +136,10 @@ async def login(form_data: login_token_field_dependency, db: db_dependency):
     )
 
     logger.info(
-        f"🔐 User Logged In | ID={user.id} | Email={user.email} | Role={user.role}"
+        f"🔐 User Logged In | "
+        f"ID={user.id} | "
+        f"Email={user.email} | "
+        f"Role={user.role}"
     )
 
     return {
@@ -122,10 +148,14 @@ async def login(form_data: login_token_field_dependency, db: db_dependency):
     }
 
 
+# --------------------------
+# Forgot Password
+# --------------------------
+
+
 @router.post("/forgot-password", status_code=status.HTTP_200_OK)
 async def forgot_password(
-    forgot_password_request: ForgotPasswordRequest,
-    db: db_dependency,
+    forgot_password_request: ForgotPasswordRequest, db: db_dependency
 ):
     """
     Send a password reset OTP to the user's email.
@@ -159,7 +189,9 @@ async def forgot_password(
 
     otp_hash = bcrypt_context.hash(otp)
 
-    expires_at = datetime.utcnow() + timedelta(minutes=10)
+    expires_at = datetime.utcnow() + timedelta(
+        minutes=PASSWORD_RESET_OTP_EXPIRE_MINUTES
+    )
 
     password_reset = PasswordReset(
         user_id=user.id,
@@ -174,7 +206,7 @@ async def forgot_password(
     html_body = render_email_template(
         "password_reset.html",
         otp=otp,
-        expiry_minutes=10,
+        expiry_minutes=PASSWORD_RESET_OTP_EXPIRE_MINUTES,
     )
 
     send_email(
@@ -182,7 +214,8 @@ async def forgot_password(
         subject="Password Reset OTP",
         body=(
             f"Your password reset OTP is: {otp}\n\n"
-            "This OTP will expire in 10 minutes.\n\n"
+            f"This OTP will expire in "
+            f"{PASSWORD_RESET_OTP_EXPIRE_MINUTES} minutes.\n\n"
             "If you did not request a password reset, "
             "you can safely ignore this email."
         ),
@@ -192,7 +225,8 @@ async def forgot_password(
     logger.info(
         f"📧 Password Reset OTP Sent | "
         f"User={user.email} | "
-        f"Reset ID={password_reset.id}"
+        f"Reset ID={password_reset.id} | "
+        f"Expires In={PASSWORD_RESET_OTP_EXPIRE_MINUTES} Minutes"
     )
 
     return {
@@ -202,14 +236,13 @@ async def forgot_password(
     }
 
 
-@router.post(
-    "/verify-otp",
-    status_code=status.HTTP_200_OK,
-)
-async def verify_otp(
-    verify_otp_request: VerifyOTPRequest,
-    db: db_dependency,
-):
+# --------------------------
+# Verify OTP
+# --------------------------
+
+
+@router.post("/verify-otp", status_code=status.HTTP_200_OK)
+async def verify_otp(verify_otp_request: VerifyOTPRequest, db: db_dependency):
     """
     Verify the password reset OTP.
     """
@@ -240,7 +273,8 @@ async def verify_otp(
     if not password_reset:
         logger.warning(
             f"⚠️ OTP Verification Failed | "
-            f"User={user.email} | No active reset request."
+            f"User={user.email} | "
+            f"No active reset request."
         )
 
         raise HTTPException(
@@ -252,7 +286,7 @@ async def verify_otp(
 
     if current_time > password_reset.expires_at:
         logger.warning(
-            f"⚠️ OTP Verification Failed | " f"User={user.email} | OTP expired."
+            f"⚠️ OTP Verification Failed | " f"User={user.email} | " f"OTP expired."
         )
 
         raise HTTPException(
@@ -265,7 +299,7 @@ async def verify_otp(
         password_reset.otp_hash,
     ):
         logger.warning(
-            f"⚠️ OTP Verification Failed | " f"User={user.email} | Invalid OTP."
+            f"⚠️ OTP Verification Failed | " f"User={user.email} | " f"Invalid OTP."
         )
 
         raise HTTPException(
@@ -289,13 +323,14 @@ async def verify_otp(
     }
 
 
-@router.post(
-    "/reset-password",
-    status_code=status.HTTP_200_OK,
-)
+# --------------------------
+# Reset Password
+# --------------------------
+
+
+@router.post("/reset-password", status_code=status.HTTP_200_OK)
 async def reset_password(
-    reset_password_request: ResetPasswordRequest,
-    db: db_dependency,
+    reset_password_request: ResetPasswordRequest, db: db_dependency
 ):
     """
     Reset the user's password after successful OTP verification.
