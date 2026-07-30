@@ -4,6 +4,7 @@ from time import perf_counter
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from starlette import status
 
@@ -140,6 +141,20 @@ app = FastAPI(
     title="Expense Tracker API",
     version="1.0.0",
     lifespan=lifespan,
+)
+
+
+# ==========================================================
+# CORS Middleware
+# ==========================================================
+origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000,http://localhost:8000")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[origin.strip() for origin in origins.split(",")],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
