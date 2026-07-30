@@ -1,8 +1,12 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
-import { APP_NAME } from '../../config/constants'
-import { Wallet, Mail, Lock, LogIn, Eye, EyeOff } from 'lucide-react'
+import { Wallet, Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react'
+import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -20,13 +24,12 @@ export default function LoginPage() {
     try {
       localStorage.setItem('last_email', email)
       const user = await login({ email, password })
+      toast.success(`Welcome back, ${user.name}!`)
       navigate(user.role === 'admin' ? '/admin' : '/dashboard', { replace: true })
     } catch (err) {
-      const status = err.response?.status
-      const message = err.response?.data?.detail
-      const debugInfo = status ? `(Status: ${status})` : '(Network Error)'
-      setError(message || `Login failed ${debugInfo}`)
-      console.error('Login Error:', err)
+      const msg = err.response?.data?.detail || 'Invalid email or password.'
+      setError(msg)
+      toast.error(msg)
     } finally {
       setLoading(false)
     }
@@ -34,94 +37,78 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated gradient orbs */}
-      <div className="absolute top-20 -left-20 w-96 h-96 bg-purple-600/30 rounded-full blur-3xl animate-pulse"></div>
-      <div className="absolute bottom-20 -right-20 w-96 h-96 bg-pink-600/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px] animate-pulse" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-pink-500/15 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
 
-      <div className="w-full max-w-md relative">
-        {/* Logo */}
+      <div className="w-full max-w-sm relative z-10">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/30 mb-4">
-            <Wallet className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/25 mb-4 ring-1 ring-white/10">
+            <Wallet className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white">{APP_NAME}</h1>
-          <p className="text-slate-400 mt-2">Sign in to continue</p>
+          <h1 className="text-2xl font-bold text-white">Welcome back</h1>
+          <p className="text-sm text-slate-400 mt-1">Sign in to your account</p>
         </div>
 
-        <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-8 shadow-2xl">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
-                <span>⚠</span> {error}
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition"
-                  placeholder="you@example.com"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition"
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition cursor-pointer"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between text-sm">
-              <Link to="/register" className="text-purple-400 hover:text-purple-300 font-medium transition">
-                Create account
-              </Link>
-              <Link to="/forgot-password" className="text-purple-400 hover:text-purple-300 font-medium transition">
-                Forgot password?
-              </Link>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-medium hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  Signing in...
+        <Card className="border-0 bg-white/5 backdrop-blur-2xl shadow-2xl ring-1 ring-white/10">
+          <CardContent className="pt-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-sm text-red-400 flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+                  {error}
                 </div>
-              ) : (
-                <>
-                  <LogIn className="w-4 h-4" />
-                  Sign in
-                </>
               )}
-            </button>
-          </form>
-        </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-slate-300 text-xs font-medium">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                  <Input id="email" type="email" required value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10 h-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-purple-500 focus:ring-purple-500/20"
+                    placeholder="you@example.com" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-slate-300 text-xs font-medium">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                  <Input id="password" type={showPassword ? 'text' : 'password'} required value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10 pr-10 h-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-purple-500 focus:ring-purple-500/20"
+                    placeholder="••••••••" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-xs">
+                <Link to="/register" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">Create account</Link>
+                <Link to="/forgot-password" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">Forgot password?</Link>
+              </div>
+
+              <Button type="submit" disabled={loading}
+                className="w-full h-10 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-500/20 font-medium">
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Signing in...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2"><LogIn className="w-4 h-4" /> Sign in</span>
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

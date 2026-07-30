@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { expensesApi } from '../../api/expenses.api'
 import { categoriesApi } from '../../api/categories.api'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 export default function ExpenseFormPage() {
   const navigate = useNavigate()
@@ -39,14 +41,8 @@ export default function ExpenseFormPage() {
       })
   }, [id])
 
-  const addItem = () => {
-    setItems([...items, { expense_category_id: '', description: '', amount: '' }])
-  }
-
-  const removeItem = (index) => {
-    setItems(items.filter((_, i) => i !== index))
-  }
-
+  const addItem = () => setItems([...items, { expense_category_id: '', description: '', amount: '' }])
+  const removeItem = (index) => setItems(items.filter((_, i) => i !== index))
   const updateItem = (index, field, value) => {
     const newItems = [...items]
     newItems[index][field] = value
@@ -68,10 +64,11 @@ export default function ExpenseFormPage() {
       }
       if (isEditing) {
         await expensesApi.update(id, payload)
+        navigate('/expenses', { state: { toastMessage: 'Expense updated successfully.', toastType: 'success' } })
       } else {
         await expensesApi.create(payload)
+        navigate('/expenses', { state: { toastMessage: 'Expense created successfully.', toastType: 'success' } })
       }
-      navigate('/expenses')
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to save expense')
     } finally {
@@ -79,94 +76,56 @@ export default function ExpenseFormPage() {
     }
   }
 
-  if (fetching) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    )
-  }
+  if (fetching) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="w-8 h-8 border-2 border-purple-200 border-t-purple-600 dark:border-purple-800 dark:border-t-purple-400 rounded-full animate-spin" />
+    </div>
+  )
 
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">{isEditing ? 'Edit Expense' : 'Add Expense'}</h1>
-        <p className="text-gray-500 mt-1">{isEditing ? 'Update your expense' : 'Record a new expense'}</p>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-white">{isEditing ? 'Edit Expense' : 'Add Expense'}</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{isEditing ? 'Update your expense' : 'Record a new expense'}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-8 space-y-6">
-        {error && <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-8 space-y-6">
+        {error && <div className="bg-red-50 border border-red-200 dark:bg-red-950/50 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg text-sm">{error}</div>}
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-          <input
-            type="date"
-            required
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-          />
+        <div className="space-y-2">
+          <Label className="text-slate-700 dark:text-slate-300">Date</Label>
+          <Input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className="border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200" />
         </div>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-700">Items</label>
-            <button type="button" onClick={addItem} className="text-sm text-blue-600 hover:text-blue-800 font-medium">
-              + Add Item
-            </button>
+            <Label className="text-slate-700 dark:text-slate-300">Items</Label>
+            <button type="button" onClick={addItem} className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 font-medium">+ Add Item</button>
           </div>
 
           {items.map((item, index) => (
-            <div key={index} className="p-4 border border-gray-200 rounded-lg space-y-3">
+            <div key={index} className="p-4 border border-slate-200 dark:border-slate-600 rounded-lg space-y-3 bg-slate-50 dark:bg-slate-900/50">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-400 font-medium">Item {index + 1}</span>
-                {items.length > 1 && (
-                  <button type="button" onClick={() => removeItem(index)} className="text-xs text-red-600 hover:text-red-800">
-                    Remove
-                  </button>
-                )}
+                <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">Item {index + 1}</span>
+                {items.length > 1 && <button type="button" onClick={() => removeItem(index)} className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300">Remove</button>}
               </div>
 
-              <select
-                required
-                value={item.expense_category_id}
-                onChange={(e) => updateItem(index, 'expense_category_id', e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition text-sm"
-              >
+              <select required value={item.expense_category_id} onChange={(e) => updateItem(index, 'expense_category_id', e.target.value)}
+                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm">
                 <option value="">Select category</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
+                {categories.map((cat) => (<option key={cat.id} value={cat.id}>{cat.name}</option>))}
               </select>
 
-              <input
-                type="text"
-                required
-                value={item.description}
-                onChange={(e) => updateItem(index, 'description', e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition text-sm"
-                placeholder="Description"
-              />
+              <Input type="text" required value={item.description} onChange={(e) => updateItem(index, 'description', e.target.value)}
+                className="border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200" placeholder="Description" />
 
-              <input
-                type="number"
-                required
-                min="0.01"
-                step="0.01"
-                value={item.amount}
-                onChange={(e) => updateItem(index, 'amount', e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition text-sm"
-                placeholder="Amount"
-              />
+              <Input type="number" required min="0.01" step="0.01" value={item.amount} onChange={(e) => updateItem(index, 'amount', e.target.value)}
+                className="border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200" placeholder="Amount" />
             </div>
           ))}
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-        >
+        <button type="submit" disabled={loading} className="btn-user-primary w-full justify-center h-10">
           {loading ? 'Saving...' : isEditing ? 'Update Expense' : 'Create Expense'}
         </button>
       </form>
