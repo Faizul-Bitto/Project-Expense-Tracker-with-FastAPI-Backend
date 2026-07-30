@@ -165,7 +165,6 @@ async def forgot_password(
 
     user = db.query(User).filter(User.email == email).first()
 
-    # Do not reveal whether the email exists.
     if not user:
         logger.warning(f"⚠️ Password Reset Requested | " f"Email={email} not found.")
 
