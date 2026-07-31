@@ -36,7 +36,7 @@ export default function AdminDashboardPage() {
           ['This Week', summary?.weekly_spending, TrendingUp, 'from-cyan-500 to-blue-500'],
           ['This Month', summary?.monthly_spending, Shield, 'from-violet-500 to-purple-500'],
         ].map(([label, val, Icon, gradient]) => (
-          <Card key={label} className={`border-0 bg-gradient-to-br ${gradient} text-white shadow-xl`}>
+          <Card key={label} className={`border-0 bg-linear-to-br ${gradient} text-white shadow-xl`}>
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div>

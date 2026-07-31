@@ -10,13 +10,12 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
 import { toast } from 'sonner'
+import { logger } from '../../utils/logger'
 
 export default function ProfilePage() {
   const { user, updateUser, logout } = useAuth()
   const [profileForm, setProfileForm] = useState({ name: user?.name || '', email: user?.email || '' })
   const [passwordForm, setPasswordForm] = useState({ password: '', new_password: '' })
-  const [profileMsg, setProfileMsg] = useState('')
-  const [passwordMsg, setPasswordMsg] = useState('')
   const [profileLoading, setProfileLoading] = useState(false)
   const [passwordLoading, setPasswordLoading] = useState(false)
   const [error, setError] = useState('')
@@ -33,20 +32,21 @@ export default function ProfilePage() {
   const handleProfileUpdate = async (e) => {
     e.preventDefault()
     setError('')
-    setProfileMsg('')
     setProfileLoading(true)
     try {
       const res = await usersApi.updateProfile(profileForm)
       updateUser(res.data.user)
-      setProfileMsg('Profile updated successfully.')
       toast.success('Profile updated successfully.')
+      logger.success('Profile', `✅ Profile Updated | Email=${profileForm.email}`)
       if (profileForm.email !== user?.email) {
         setReauthMessage('Your email has been changed. Please login again for security purposes.')
         setShowReauth(true)
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to update profile')
-      toast.error(err.response?.data?.detail || 'Failed to update profile')
+      const msg = err.response?.data?.detail || 'Failed to update profile'
+      setError(msg)
+      toast.error(msg)
+      logger.error('Profile', `❌ Profile Update Failed | Reason=${msg}`)
     } finally {
       setProfileLoading(false)
     }
@@ -55,16 +55,18 @@ export default function ProfilePage() {
   const handlePasswordUpdate = async (e) => {
     e.preventDefault()
     setError('')
-    setPasswordMsg('')
     setPasswordLoading(true)
     try {
       await usersApi.updatePassword(passwordForm)
       toast.success('Password changed successfully. Please login again.')
+      logger.success('Profile', `🔐 Password Changed | User=${user?.email}`)
       setReauthMessage('Your password has been changed successfully. Please login again with your new password.')
       setShowReauth(true)
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to update password')
-      toast.error(err.response?.data?.detail || 'Failed to update password')
+      const msg = err.response?.data?.detail || 'Failed to update password'
+      setError(msg)
+      toast.error(msg)
+      logger.error('Profile', `❌ Password Change Failed | Reason=${msg}`)
     } finally {
       setPasswordLoading(false)
     }
@@ -100,7 +102,7 @@ export default function ProfilePage() {
           </DialogHeader>
           <DialogFooter className="sm:justify-center gap-3 mt-4">
             <Button onClick={handleReauthConfirm}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white min-w-[120px]">
+              className="bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white min-w-30">
               <LogOut className="w-4 h-4 mr-2" /> Login Again
             </Button>
           </DialogFooter>
@@ -110,7 +112,7 @@ export default function ProfilePage() {
       <Card className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center">
               <User className="w-5 h-5 text-purple-600 dark:text-purple-400" />
             </div>
             <CardTitle className="text-slate-800 dark:text-slate-200">Profile Information</CardTitle>
@@ -133,7 +135,7 @@ export default function ProfilePage() {
                 className="border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200" />
             </div>
             <Button type="submit" disabled={profileLoading}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white">
+              className="bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white">
               <Save className="w-4 h-4 mr-2" />
               {profileLoading ? 'Saving...' : 'Update Profile'}
             </Button>
@@ -144,7 +146,7 @@ export default function ProfilePage() {
       <Card className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 dark:from-cyan-900/30 dark:to-blue-900/30 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-cyan-100 to-blue-100 dark:from-cyan-900/30 dark:to-blue-900/30 flex items-center justify-center">
               <Lock className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
             </div>
             <CardTitle className="text-slate-800 dark:text-slate-200">Change Password</CardTitle>
@@ -179,7 +181,7 @@ export default function ProfilePage() {
               </div>
             </div>
             <Button type="submit" disabled={passwordLoading}
-              className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white">
+              className="bg-linear-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white">
               <KeyRound className="w-4 h-4 mr-2" />
               {passwordLoading ? 'Updating...' : 'Change Password'}
             </Button>

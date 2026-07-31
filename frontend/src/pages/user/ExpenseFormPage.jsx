@@ -4,6 +4,7 @@ import { expensesApi } from '../../api/expenses.api'
 import { categoriesApi } from '../../api/categories.api'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { logger } from '../../utils/logger'
 
 export default function ExpenseFormPage() {
   const navigate = useNavigate()
@@ -18,27 +19,34 @@ export default function ExpenseFormPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    let cancelled = false
     categoriesApi.getAll()
-      .then((res) => setCategories(res.data.expense_categories))
+      .then((res) => {
+        if (!cancelled) setCategories(res.data.expense_categories)
+      })
       .catch(() => {})
       .finally(() => {
-        if (isEditing) {
-          expensesApi.getById(id)
-            .then((res) => {
-              const exp = res.data.expense
-              setDate(exp.date)
-              setItems(exp.items.map((i) => ({
-                expense_category_id: i.expense_category_id,
-                description: i.description,
-                amount: i.amount,
-              })))
-            })
-            .catch((err) => setError(err.response?.data?.detail || 'Failed to load expense'))
-            .finally(() => setFetching(false))
-        } else {
-          setFetching(false)
-        }
+        if (cancelled) return
+        if (!id) { setFetching(false); return }
+        expensesApi.getById(id)
+          .then((res) => {
+            if (cancelled) return
+            const exp = res.data.expense
+            setDate(exp.date)
+            setItems(exp.items.map((i) => ({
+              expense_category_id: i.expense_category_id,
+              description: i.description,
+              amount: i.amount,
+            })))
+          })
+          .catch((err) => {
+            if (!cancelled) setError(err.response?.data?.detail || 'Failed to load expense')
+          })
+          .finally(() => {
+            if (!cancelled) setFetching(false)
+          })
       })
+    return () => { cancelled = true }
   }, [id])
 
   const addItem = () => setItems([...items, { expense_category_id: '', description: '', amount: '' }])
@@ -64,13 +72,17 @@ export default function ExpenseFormPage() {
       }
       if (isEditing) {
         await expensesApi.update(id, payload)
+        logger.success('Expenses', `✅ Expense Updated | ID=${id} | Date=${date}`)
         navigate('/expenses', { state: { toastMessage: 'Expense updated successfully.', toastType: 'success' } })
       } else {
         await expensesApi.create(payload)
+        logger.success('Expenses', `✅ Expense Created | Date=${date} | Items=${items.length}`)
         navigate('/expenses', { state: { toastMessage: 'Expense created successfully.', toastType: 'success' } })
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to save expense')
+      const msg = err.response?.data?.detail || 'Failed to save expense'
+      setError(msg)
+      logger.error('Expenses', `❌ Expense Save Failed | Date=${date} | Reason=${msg}`)
     } finally {
       setLoading(false)
     }

@@ -1,46 +1,47 @@
-import { createContext, useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { usersApi } from '../api/users.api'
 import { authApi } from '../api/auth.api'
-
-export const AuthContext = createContext(null)
+import { AuthContext } from './auth.context'
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  const token = localStorage.getItem('access_token')
-  const isAuthenticated = !!token
+  const isAuthenticated = !!localStorage.getItem('access_token')
   const isAdmin = localStorage.getItem('user_role') === 'admin'
 
   useEffect(() => {
-    if (!token) {
-      setLoading(false)
-      return
-    }
+    const token = localStorage.getItem('access_token')
     let cancelled = false
-    usersApi.getProfile()
-      .then((res) => {
+
+    async function loadProfile() {
+      if (!token) {
+        Promise.resolve().then(() => setLoading(false))
+        return
+      }
+      try {
+        const res = await usersApi.getProfile()
         if (!cancelled) {
           const userData = res.data.user
           setUser(userData)
           localStorage.setItem('user_role', userData.role)
         }
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) {
           localStorage.removeItem('access_token')
           localStorage.removeItem('user_role')
           setUser(null)
         }
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setLoading(false)
-      })
+      }
+    }
+
+    loadProfile()
     return () => { cancelled = true }
   }, [])
 
   const login = useCallback(async (credentials) => {
-    // Clear any old/broken token before trying to log in
     localStorage.removeItem('access_token')
     localStorage.removeItem('user_role')
 
@@ -53,7 +54,6 @@ export function AuthProvider({ children }) {
 
     localStorage.setItem('access_token', access_token)
 
-    // Fetch profile to get user info and role
     const profileRes = await usersApi.getProfile()
     const userData = profileRes.data.user
 

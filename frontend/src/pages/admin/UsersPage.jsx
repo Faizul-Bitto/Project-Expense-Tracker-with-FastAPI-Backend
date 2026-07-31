@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { adminUsersApi } from '../../api/admin/users.api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,15 +21,15 @@ export default function AdminUsersPage() {
   const [deleteId, setDeleteId] = useState(null)
   const [resetId, setResetId] = useState(null)
 
-  const fetchUsers = () => {
+  const fetchUsers = useCallback(() => {
     setLoading(true)
     const api = search.trim() ? adminUsersApi.search(search.trim()) : adminUsersApi.getAll()
     api.then((res) => setUsers(res.data.users))
       .catch((err) => setError(err.response?.data?.detail || 'Failed to load users'))
       .finally(() => setLoading(false))
-  }
+  }, [search])
 
-  useEffect(() => { fetchUsers() }, [])
+  useEffect(() => { Promise.resolve().then(() => fetchUsers()) }, [fetchUsers])
   const handleSearch = (e) => { e.preventDefault(); fetchUsers() }
 
   const openCreateForm = () => { setEditingUser(null); setForm({ name: '', email: '', password: '', role: 'user' }); setShowForm(true); setFormError('') }
@@ -114,7 +114,7 @@ export default function AdminUsersPage() {
             </div>
             <DialogFooter className="gap-2 mt-6">
               <Button type="button" variant="outline" onClick={() => setShowForm(false)} className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300">Cancel</Button>
-              <Button type="submit" disabled={formLoading} className="bg-cyan-600 hover:bg-cyan-500 text-white dark:bg-gradient-to-r dark:from-cyan-500 dark:to-blue-600">{formLoading ? 'Saving...' : editingUser ? 'Update User' : 'Create User'}</Button>
+              <Button type="submit" disabled={formLoading} className="bg-cyan-600 hover:bg-cyan-500 text-white dark:bg-linear-to-r dark:from-cyan-500 dark:to-blue-600">{formLoading ? 'Saving...' : editingUser ? 'Update User' : 'Create User'}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

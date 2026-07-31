@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { authApi } from '../../api/auth.api'
 import { Lock, KeyRound, ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { logger } from '../../utils/logger'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,6 +23,7 @@ export default function ResetPasswordPage() {
     setLoading(true)
     try {
       await authApi.resetPassword({ email, password })
+      logger.success('Auth', `🔐 Password reset successful | Email=${email}`)
       navigate('/login', {
         replace: true,
         state: {
@@ -30,7 +32,9 @@ export default function ResetPasswordPage() {
         },
       })
     } catch (err) {
-      setError(err.response?.data?.detail || 'Password reset failed.')
+      const msg = err.response?.data?.detail || 'Password reset failed.'
+      setError(msg)
+      logger.error('Auth', `❌ Password reset failed | Email=${email} | Reason=${msg}`)
     } finally {
       setLoading(false)
     }
@@ -42,7 +46,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 via-purple-950 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px] animate-pulse" />
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-pink-500/15 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
@@ -50,7 +54,7 @@ export default function ResetPasswordPage() {
 
       <div className="w-full max-w-sm relative z-10">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/25 mb-4 ring-1 ring-white/10">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-linear-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/25 mb-4 ring-1 ring-white/10">
             <KeyRound className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white">Reset Password</h1>
@@ -85,7 +89,7 @@ export default function ResetPasswordPage() {
               </div>
 
               <Button type="submit" disabled={loading || password.length < 6}
-                className="w-full h-10 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-500/20 font-medium">
+                className="w-full h-10 bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-500/20 font-medium">
                 <KeyRound className="w-4 h-4 mr-2" />
                 {loading ? 'Resetting...' : 'Reset Password'}
               </Button>

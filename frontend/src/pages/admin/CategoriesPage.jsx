@@ -27,7 +27,7 @@ export default function AdminCategoriesPage() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { fetchCategories() }, [])
+  useEffect(() => { Promise.resolve().then(() => fetchCategories()) }, [])
   const openCreate = () => { setEditingCat(null); setName(''); setShowForm(true); setFormError('') }
   const openEdit = (cat) => { setEditingCat(cat); setName(cat.name); setShowForm(true); setFormError('') }
 

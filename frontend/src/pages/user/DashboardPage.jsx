@@ -53,7 +53,7 @@ export default function DashboardPage() {
         ].map(([label, val], i) => {
           const Icon = icons[i]
           return (
-            <Card key={label} className={`border-0 bg-gradient-to-br ${gradients[i]} text-white shadow-xl`}>
+            <Card key={label} className={`border-0 bg-linear-to-br ${gradients[i]} text-white shadow-xl`}>
               <CardContent className="p-5 relative overflow-hidden">
                 <div className="absolute top-2 right-2 opacity-10">
                   <Icon className="w-20 h-20" />
@@ -74,7 +74,7 @@ export default function DashboardPage() {
         ].map(([label, val, Icon, bg]) => (
           <Card key={label} className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 card-hover">
             <CardContent className="p-5 flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${bg} flex items-center justify-center shrink-0`}>
+              <div className={`w-12 h-12 rounded-xl bg-linear-to-br ${bg} flex items-center justify-center shrink-0`}>
                 <Icon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>

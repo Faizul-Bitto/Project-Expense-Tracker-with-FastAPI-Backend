@@ -1,30 +1,19 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { expensesApi } from '../../api/expenses.api'
 import { Button } from '@/components/ui/button'
-import { Pencil, Trash2, Plus, Wallet } from 'lucide-react'
+import { Pencil, Trash2, Plus, Wallet, CalendarDays, X } from 'lucide-react'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { toast } from 'sonner'
+import { logger } from '../../utils/logger'
 
 export default function ExpensesPage() {
-  const navigate = useNavigate()
-  const location = useLocation()
   const [expenses, setExpenses] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [deleteId, setDeleteId] = useState(null)
-
-  // Show toasts from route state (e.g., after creating an expense)
-  useEffect(() => {
-    if (location.state?.toastMessage) {
-      const msg = location.state.toastMessage
-      const type = location.state.toastType || 'success'
-      if (type === 'success') toast.success(msg, { duration: 4000 })
-      else if (type === 'error') toast.error(msg, { duration: 4000 })
-      else toast(msg, { duration: 4000 })
-      window.history.replaceState({}, document.title)
-    }
-  }, [location])
+  const [filterDate, setFilterDate] = useState('')
+  const [isFiltered, setIsFiltered] = useState(false)
 
   const fetchExpenses = () => {
     setLoading(true)
@@ -35,16 +24,41 @@ export default function ExpensesPage() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { fetchExpenses() }, [])
+  useEffect(() => { Promise.resolve().then(() => fetchExpenses()) }, [])
+
+  const filterByDate = async () => {
+    if (!filterDate) return
+    setLoading(true)
+    setError('')
+    try {
+      const res = await expensesApi.getByDate(filterDate)
+      setExpenses(res.data.expenses)
+      setIsFiltered(true)
+      toast.success(`Showing expenses for ${filterDate}`)
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to filter by date')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const clearFilter = () => {
+    setFilterDate('')
+    setIsFiltered(false)
+    fetchExpenses()
+  }
 
   const handleDelete = async () => {
     if (!deleteId) return
     try {
       await expensesApi.delete(deleteId)
       setExpenses((prev) => prev.filter((e) => e.id !== deleteId))
+      logger.success('Expenses', `🗑️ Expense Deleted | ID=${deleteId}`)
       toast.success('Expense deleted successfully.')
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to delete expense')
+      const msg = err.response?.data?.detail || 'Failed to delete expense'
+      logger.error('Expenses', `❌ Expense Delete Failed | ID=${deleteId} | Reason=${msg}`)
+      toast.error(msg)
     }
     setDeleteId(null)
   }
@@ -71,9 +85,32 @@ export default function ExpensesPage() {
         </Link>
       </div>
 
+      {/* Date Filter */}
+      <div className="flex items-center gap-3 mb-6 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+        <CalendarDays className="w-5 h-5 text-purple-600 dark:text-purple-400 shrink-0" />
+        <input
+          type="date"
+          value={filterDate}
+          onChange={(e) => setFilterDate(e.target.value)}
+          className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+        />
+        <button onClick={filterByDate} disabled={!filterDate} className="btn-user-primary text-sm py-2">
+          Search by Date
+        </button>
+        {isFiltered && (
+          <button onClick={clearFilter} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+            <X className="w-4 h-4" /> Clear
+          </button>
+        )}
+        {isFiltered && (
+          <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">
+            Showing results for: {filterDate}
+          </span>
+        )}
+      </div>
+
       {error && <div className="bg-red-50 border border-red-200 dark:bg-red-950/50 dark:border-red-800 text-red-600 dark:text-red-400 p-4 rounded-lg mb-6 text-sm">{error}</div>}
 
-      {/* Delete Confirmation */}
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(o) => { if (!o) setDeleteId(null) }}
@@ -83,26 +120,38 @@ export default function ExpensesPage() {
         confirmText="Delete"
       />
 
-      {expenses.length === 0 ? (
+      {expenses.length === 0 && !isFiltered ? (
         <div className="text-center py-20 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800/50">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center mx-auto mb-4">
             <Wallet className="w-8 h-8 text-purple-600 dark:text-purple-400" />
           </div>
           <p className="text-lg font-medium text-slate-700 dark:text-slate-300">No expenses yet</p>
           <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Add your first expense to get started</p>
           <Link to="/expenses/new">
-            <Button className="mt-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white glow-purple glossy-btn">
-              <Plus className="w-4 h-4 mr-2" /> Add Expense
-            </Button>
+            <button className="mt-6 btn-user-primary">
+              <Plus className="w-4 h-4" /> Add Expense
+            </button>
+        gelike this :
           </Link>
+        </div>
+      ) : expenses.length === 0 && isFiltered ? (
+        <div className="text-center py-20 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800/50">
+          <CalendarDays className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+          <p className="text-lg font-medium text-slate-700 dark:text-slate-300">No expenses for {filterDate}</p>
+          <button onClick={clearFilter} className="mt-2 text-sm text-purple-600 dark:text-purple-400 hover:underline">Clear filter</button>
         </div>
       ) : (
         <div className="space-y-4">
+          {isFiltered && (
+            <p className="text-sm text-purple-600 dark:text-purple-400 font-medium">
+              Found {expenses.length} expense(s) for {filterDate}
+            </p>
+          )}
           {expenses.map((expense) => (
             <div key={expense.id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 card-glow">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-linear-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center shrink-0">
                     <Wallet className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div>

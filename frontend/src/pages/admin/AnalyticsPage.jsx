@@ -41,13 +41,12 @@ export default function AdminAnalyticsPage() {
   useEffect(() => {
     Promise.all([
       adminAnalyticsApi.getSummary(),
-      adminAnalyticsApi.getUsers(),
       adminAnalyticsApi.getTopUsers(),
       adminAnalyticsApi.getCategories(),
       adminAnalyticsApi.getMonthlyTrend(),
       adminAnalyticsApi.getWeeklyTrend(),
       adminAnalyticsApi.getRecentExpenses(),
-    ]).then(([sum, _, top, cat, month, week, rec]) => {
+    ]).then(([sum, top, cat, month, week, rec]) => {
       setSummary(sum.data.summary)
       setTopUsers(top.data.users || [])
       setCategoryData(cat.data.categories || [])

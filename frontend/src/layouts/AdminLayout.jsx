@@ -29,7 +29,7 @@ export default function AdminLayout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 shadow-md flex items-center justify-center">
+              <div className="w-9 h-9 rounded-lg bg-linear-to-br from-cyan-500 to-blue-600 shadow-md flex items-center justify-center">
                 <Shield className="w-5 h-5 text-white" />
               </div>
               <span className="font-bold text-base text-slate-800 dark:text-white">Expense Tracker</span>
@@ -44,7 +44,7 @@ export default function AdminLayout() {
                   end={end}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     isActive(to, end)
-                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md'
+                      ? 'bg-linear-to-r from-cyan-500 to-blue-600 text-white shadow-md'
                       : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800'
                   }`}
                 >
@@ -86,7 +86,7 @@ export default function AdminLayout() {
               <div className="hidden md:flex items-center gap-2">
                 <div className="flex items-center gap-3 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
                   <Avatar className="w-8 h-8">
-                    <AvatarFallback className="text-xs font-bold text-white bg-gradient-to-br from-cyan-500 to-blue-600">
+                    <AvatarFallback className="text-xs font-bold text-white bg-linear-to-br from-cyan-500 to-blue-600">
                       {user?.name?.[0]?.toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -109,7 +109,7 @@ export default function AdminLayout() {
       </main>
 
       <button onClick={toggleTheme}
-        className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-xl hover:shadow-2xl hover:scale-110 transition-all duration-300 flex items-center justify-center"
+        className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-white shadow-xl hover:shadow-2xl hover:scale-110 transition-all duration-300 flex items-center justify-center"
         title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
         {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
       </button>

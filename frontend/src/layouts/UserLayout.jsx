@@ -23,12 +23,12 @@ export default function UserLayout() {
   const isActive = (p) => p === '/dashboard' ? location.pathname === p : location.pathname.startsWith(p)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950">
       <header className="sticky top-0 z-40 glass-card border-b border-slate-200/50 dark:border-slate-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md shadow-indigo-200/50 dark:shadow-indigo-500/20 flex items-center justify-center">
+              <div className="w-9 h-9 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 shadow-md shadow-indigo-200/50 dark:shadow-indigo-500/20 flex items-center justify-center">
                 <Wallet className="w-5 h-5 text-white" />
               </div>
               <span className="font-bold text-base text-slate-800 dark:text-white">Expense Tracker</span>
@@ -41,7 +41,7 @@ export default function UserLayout() {
                   to={to}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     isActive(to)
-                      ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white glow-purple'
+                      ? 'bg-linear-to-r from-indigo-500 to-purple-600 text-white glow-purple'
                       : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800'
                   }`}
                 >
@@ -83,7 +83,7 @@ export default function UserLayout() {
               <div className="hidden md:flex items-center gap-2">
                 <NavLink to="/profile" className="flex items-center gap-3 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
                   <Avatar className="w-8 h-8 shadow-md shadow-indigo-200/50 dark:shadow-indigo-500/20">
-                    <AvatarFallback className="text-xs font-bold text-white bg-gradient-to-br from-indigo-500 to-purple-600">
+                    <AvatarFallback className="text-xs font-bold text-white bg-linear-to-br from-indigo-500 to-purple-600">
                       {user?.name?.[0]?.toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -108,7 +108,7 @@ export default function UserLayout() {
       {/* Floating Theme Toggle - Bottom Right */}
       <button
         onClick={toggleTheme}
-        className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-xl hover:shadow-2xl hover:scale-110 transition-all duration-300 flex items-center justify-center glow-purple"
+        className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-linear-to-br from-indigo-500 to-purple-600 text-white shadow-xl hover:shadow-2xl hover:scale-110 transition-all duration-300 flex items-center justify-center glow-purple"
         title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
       >
         {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}

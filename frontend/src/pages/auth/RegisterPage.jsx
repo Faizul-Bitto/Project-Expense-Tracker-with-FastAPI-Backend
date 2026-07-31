@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { Mail, Lock, User, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { logger } from '../../utils/logger'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -20,25 +21,28 @@ export default function RegisterPage() {
     setLoading(true)
     try {
       await register(form)
+      logger.success('Auth', `✅ User Registered | Email=${form.email}`)
       navigate('/login', {
         replace: true,
         state: { toastMessage: 'Account created successfully! Please sign in.', toastType: 'success' },
       })
     } catch (err) {
-      setError(err.response?.data?.detail || 'Registration failed.')
+      const msg = err.response?.data?.detail || 'Registration failed.'
+      setError(msg)
+      logger.error('Auth', `❌ Registration Failed | Email=${form.email} | Reason=${msg}`)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 via-purple-950 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute top-10 right-10 w-80 h-80 bg-pink-600/20 rounded-full blur-3xl animate-pulse"></div>
       <div className="absolute bottom-10 left-10 w-80 h-80 bg-purple-600/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }}></div>
 
       <div className="w-full max-w-sm relative">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/25 mb-4 ring-1 ring-white/10">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-linear-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/25 mb-4 ring-1 ring-white/10">
             <UserPlus className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white">Create Account</h1>
@@ -86,7 +90,7 @@ export default function RegisterPage() {
               </div>
 
               <Button type="submit" disabled={loading}
-                className="w-full h-10 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-500/20 font-medium">
+                className="w-full h-10 bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-500/20 font-medium">
                 {loading ? 'Creating...' : 'Create account'}
               </Button>
 
