@@ -35,6 +35,10 @@ function ToastWatcher() {
 }
 
 function App() {
+  useEffect(() => {
+    document.title = 'Expense Tracker'
+  }, [])
+
   return (
     <ThemeProvider>
       <AuthProvider>
