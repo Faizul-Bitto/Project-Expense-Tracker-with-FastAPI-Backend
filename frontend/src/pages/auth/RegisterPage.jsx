@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
-import { Mail, Lock, User, UserPlus } from 'lucide-react'
+import { Mail, Lock, User, UserPlus, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { logger } from '../../utils/logger'
 import { Card, CardContent } from '@/components/ui/card'
@@ -12,6 +12,7 @@ export default function RegisterPage() {
   const navigate = useNavigate()
   const { register } = useAuth()
   const [form, setForm] = useState({ name: '', email: '', password: '' })
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -45,7 +46,8 @@ export default function RegisterPage() {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-linear-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/25 mb-4 ring-1 ring-white/10">
             <UserPlus className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Create Account</h1>
+          <h1 className="text-3xl font-bold text-white">Expense Tracker</h1>
+          <h2 className="text-lg font-semibold text-slate-300 mt-4">Create Account</h2>
           <p className="text-sm text-slate-400 mt-1">Join us today</p>
         </div>
 
@@ -82,10 +84,14 @@ export default function RegisterPage() {
                 <Label className="text-slate-300 text-xs font-medium">Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
-                  <Input type="password" required minLength={6} value={form.password}
+                  <Input type={showPassword ? 'text' : 'password'} required minLength={6} value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    className="pl-10 h-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-purple-500 focus:ring-purple-500/20"
+                    className="pl-10 pr-10 h-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-purple-500 focus:ring-purple-500/20"
                     placeholder="Min 6 characters" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 

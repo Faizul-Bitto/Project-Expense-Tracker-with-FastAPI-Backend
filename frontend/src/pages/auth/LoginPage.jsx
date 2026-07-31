@@ -49,7 +49,8 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-linear-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/25 mb-4 ring-1 ring-white/10">
             <Wallet className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Welcome back</h1>
+          <h1 className="text-3xl font-bold text-white">Expense Tracker</h1>
+          <h2 className="text-lg font-semibold text-slate-300 mt-4">Welcome back</h2>
           <p className="text-sm text-slate-400 mt-1">Sign in to your account</p>
         </div>
         <Card className="border-0 bg-white/5 backdrop-blur-2xl shadow-2xl ring-1 ring-white/10">
