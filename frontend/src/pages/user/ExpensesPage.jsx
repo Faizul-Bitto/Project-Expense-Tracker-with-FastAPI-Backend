@@ -127,12 +127,6 @@ export default function ExpensesPage() {
           </div>
           <p className="text-lg font-medium text-slate-700 dark:text-slate-300">No expenses yet</p>
           <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Add your first expense to get started</p>
-          <Link to="/expenses/new">
-            <button className="mt-6 btn-user-primary">
-              <Plus className="w-4 h-4" /> Add Expense
-            </button>
-        gelike this :
-          </Link>
         </div>
       ) : expenses.length === 0 && isFiltered ? (
         <div className="text-center py-20 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800/50">
