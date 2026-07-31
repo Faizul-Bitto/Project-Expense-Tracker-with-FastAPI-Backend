@@ -74,7 +74,6 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('access_token')
     localStorage.removeItem('user_role')
     setUser(null)
-    window.location.href = '/login'
   }, [])
 
   const updateUser = useCallback((userData) => {

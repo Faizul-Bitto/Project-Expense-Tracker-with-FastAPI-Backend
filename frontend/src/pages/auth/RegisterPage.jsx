@@ -38,8 +38,8 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-900 via-purple-950 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute top-10 right-10 w-80 h-80 bg-pink-600/20 rounded-full blur-3xl animate-pulse"></div>
-      <div className="absolute bottom-10 left-10 w-80 h-80 bg-purple-600/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }}></div>
+      <div className="hidden sm:block absolute top-10 right-10 w-80 h-80 bg-pink-600/20 rounded-full blur-3xl animate-pulse"></div>
+      <div className="hidden sm:block absolute bottom-10 left-10 w-80 h-80 bg-purple-600/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }}></div>
 
       <div className="w-full max-w-sm relative">
         <div className="text-center mb-8">
@@ -51,7 +51,7 @@ export default function RegisterPage() {
           <p className="text-sm text-slate-400 mt-1">Join us today</p>
         </div>
 
-        <Card className="border-0 bg-white/5 backdrop-blur-2xl shadow-2xl ring-1 ring-white/10">
+        <Card className="border-0 bg-slate-900/80 backdrop-blur-sm shadow-2xl ring-1 ring-white/10">
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (

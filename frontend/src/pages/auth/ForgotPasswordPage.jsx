@@ -36,8 +36,8 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-900 via-purple-950 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px] animate-pulse" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-pink-500/15 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="hidden sm:block absolute -top-40 -right-40 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px] animate-pulse" />
+        <div className="hidden sm:block absolute -bottom-40 -left-40 w-96 h-96 bg-pink-500/15 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
       <div className="w-full max-w-sm relative z-10">
         <div className="text-center mb-8">
@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
           <h2 className="text-lg font-semibold text-slate-300 mt-4">Reset Password</h2>
           <p className="text-sm text-slate-400 mt-1">Enter your email to receive an OTP</p>
         </div>
-        <Card className="border-0 bg-white/5 backdrop-blur-2xl shadow-2xl ring-1 ring-white/10">
+        <Card className="border-0 bg-slate-900/80 backdrop-blur-sm shadow-2xl ring-1 ring-white/10">
           <CardContent className="pt-6">
             {error && <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-sm text-red-400 flex items-center gap-2 mb-5"><div className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />{error}</div>}
             <form onSubmit={handleSubmit} className="space-y-5">

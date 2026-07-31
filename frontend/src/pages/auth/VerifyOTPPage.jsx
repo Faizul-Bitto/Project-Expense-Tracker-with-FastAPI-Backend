@@ -40,8 +40,8 @@ export default function VerifyOTPPage() {
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-900 via-purple-950 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px] animate-pulse" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-pink-500/15 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="hidden sm:block absolute -top-40 -right-40 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px] animate-pulse" />
+        <div className="hidden sm:block absolute -bottom-40 -left-40 w-96 h-96 bg-pink-500/15 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
       <div className="w-full max-w-sm relative z-10">
@@ -55,7 +55,7 @@ export default function VerifyOTPPage() {
           <p className="text-sm font-medium text-purple-300 mt-0.5">{email}</p>
         </div>
 
-        <Card className="border-0 bg-white/5 backdrop-blur-2xl shadow-2xl ring-1 ring-white/10">
+        <Card className="border-0 bg-slate-900/80 backdrop-blur-sm shadow-2xl ring-1 ring-white/10">
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
