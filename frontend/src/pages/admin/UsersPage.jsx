@@ -133,8 +133,8 @@ export default function AdminUsersPage() {
           <Button onClick={openCreateForm} className="mt-6 bg-cyan-600 hover:bg-cyan-500 text-white"><Plus className="w-4 h-4 mr-2" /> Add User</Button>
         </div>
       ) : (
-        <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden">
-          <table className="w-full">
+        <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-x-auto">
+          <table className="w-full min-w-[640px]">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700">
                 <th className="text-left px-6 py-3.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">#</th>

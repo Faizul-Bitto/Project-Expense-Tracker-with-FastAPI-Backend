@@ -94,8 +94,8 @@ export default function AdminCategoriesPage() {
           <p className="text-lg font-medium text-gray-700 dark:text-gray-300">No categories</p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden">
-          <table className="w-full">
+        <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-x-auto">
+          <table className="w-full min-w-[640px]">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700">
                 <th className="text-left px-6 py-3.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">#</th>
