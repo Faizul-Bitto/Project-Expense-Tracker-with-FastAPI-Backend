@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { adminUsersApi } from '../../api/admin/users.api'
 import { adminExpensesApi } from '../../api/admin/expenses.api'
+import { categoriesApi } from '../../api/categories.api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Trash2, Wallet, Search } from 'lucide-react'
@@ -9,6 +10,7 @@ import { toast } from 'sonner'
 
 export default function AdminExpensesPage() {
   const [users, setUsers] = useState([])
+  const [categoryMap, setCategoryMap] = useState({})
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [selectedUser, setSelectedUser] = useState(null)
@@ -19,7 +21,16 @@ export default function AdminExpensesPage() {
   const [error, setError] = useState('')
   const [deleteId, setDeleteId] = useState(null)
 
-  useEffect(() => { adminUsersApi.getAll().then((res) => setUsers(res.data.users)).catch(() => {}) }, [])
+  useEffect(() => {
+    adminUsersApi.getAll().then((res) => setUsers(res.data.users)).catch(() => {})
+    categoriesApi.getAll().then((res) => {
+      const map = {}
+      ;(res.data.expense_categories || []).forEach((cat) => {
+        map[cat.id] = cat.name
+      })
+      setCategoryMap(map)
+    }).catch(() => {})
+  }, [])
 
   const loadExpenses = useCallback(async (userId) => {
     setExpensesLoading(true); setError('')
@@ -148,8 +159,16 @@ export default function AdminExpensesPage() {
                 <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700">
                   {expense.items.map((item, idx) => (
                     <div key={item.id || idx} className="flex items-center justify-between text-sm py-1.5">
-                      <div className="flex items-center gap-3"><div className="w-2 h-2 rounded-full bg-cyan-400" /><span className="text-gray-600 dark:text-gray-300">{item.description}</span></div>
-                      <span className="font-semibold text-gray-900 dark:text-white">${Number(item.amount).toFixed(2)}</span>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-2 h-2 rounded-full bg-cyan-400 shrink-0" />
+                        <span className="text-gray-600 dark:text-gray-300 truncate">{item.description}</span>
+                        {categoryMap[item.expense_category_id] && (
+                          <span className="shrink-0 text-[11px] px-2 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-900/40 text-cyan-600 dark:text-cyan-400 font-medium">
+                            {categoryMap[item.expense_category_id]}
+                          </span>
+                        )}
+                      </div>
+                      <span className="font-semibold text-gray-900 dark:text-white shrink-0 ml-3">${Number(item.amount).toFixed(2)}</span>
                     </div>
                   ))}
                 </div>

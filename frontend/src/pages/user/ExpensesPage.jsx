@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { expensesApi } from '../../api/expenses.api'
+import { categoriesApi } from '../../api/categories.api'
 import { Button } from '@/components/ui/button'
 import { Pencil, Trash2, Plus, Wallet, CalendarDays, X } from 'lucide-react'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
@@ -9,6 +10,7 @@ import { logger } from '../../utils/logger'
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState([])
+  const [categoryMap, setCategoryMap] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [deleteId, setDeleteId] = useState(null)
@@ -24,7 +26,24 @@ export default function ExpensesPage() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { Promise.resolve().then(() => fetchExpenses()) }, [])
+  const fetchCategories = () => {
+    categoriesApi.getAll()
+      .then((res) => {
+        const map = {}
+        ;(res.data.expense_categories || []).forEach((cat) => {
+          map[cat.id] = cat.name
+        })
+        setCategoryMap(map)
+      })
+      .catch(() => {})
+  }
+
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      fetchCategories()
+      fetchExpenses()
+    })
+  }, [])
 
   const filterByDate = async () => {
     if (!filterDate) return
@@ -172,11 +191,16 @@ export default function ExpensesPage() {
                   <div className="space-y-2.5">
                     {expense.items.map((item, idx) => (
                       <div key={item.id || idx} className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-3">
-                          <div className="w-2 h-2 rounded-full bg-purple-400 dark:bg-purple-500" />
-                          <span className="text-slate-600 dark:text-slate-300">{item.description}</span>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-2 h-2 rounded-full bg-purple-400 dark:bg-purple-500 shrink-0" />
+                          <span className="text-slate-600 dark:text-slate-300 truncate">{item.description}</span>
+                          {categoryMap[item.expense_category_id] && (
+                            <span className="shrink-0 text-[11px] px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 font-medium">
+                              {categoryMap[item.expense_category_id]}
+                            </span>
+                          )}
                         </div>
-                        <span className="font-semibold text-slate-800 dark:text-white">${Number(item.amount).toFixed(2)}</span>
+                        <span className="font-semibold text-slate-800 dark:text-white shrink-0 ml-3">${Number(item.amount).toFixed(2)}</span>
                       </div>
                     ))}
                   </div>
