@@ -10,16 +10,21 @@ load_dotenv()
 
 SMTP_HOST = os.getenv("SMTP_HOST")
 SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
+
 SMTP_USERNAME = os.getenv("SMTP_USERNAME")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+
 SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL")
-SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "Expense Tracker")
+SMTP_FROM_NAME = os.getenv(
+    "SMTP_FROM_NAME",
+    "Expense Tracker",
+)
 
-
-# Email templates directory
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "templates" / "emails"
 
-template_environment = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
+template_environment = Environment(
+    loader=FileSystemLoader(TEMPLATE_DIR),
+)
 
 
 def render_email_template(
@@ -27,7 +32,7 @@ def render_email_template(
     **context,
 ) -> str:
     """
-    Render an HTML email template with dynamic values.
+    Render an HTML email template.
     """
 
     template = template_environment.get_template(template_name)
@@ -42,7 +47,7 @@ def send_email(
     html_body: str | None = None,
 ):
     """
-    Send an email using Gmail SMTP.
+    Send an email using Brevo SMTP.
     """
 
     message = EmailMessage()
@@ -51,22 +56,39 @@ def send_email(
     message["To"] = recipient_email
     message["Subject"] = subject
 
-    # Plain-text fallback
     message.set_content(body)
 
-    # HTML version
     if html_body:
         message.add_alternative(
             html_body,
             subtype="html",
         )
 
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-        server.starttls()
+    try:
+        with smtplib.SMTP(
+            SMTP_HOST,
+            SMTP_PORT,
+            timeout=30,
+        ) as server:
 
-        server.login(
-            SMTP_USERNAME,
-            SMTP_PASSWORD,
-        )
+            server.ehlo()
 
-        server.send_message(message)
+            server.starttls()
+
+            server.ehlo()
+
+            server.login(
+                SMTP_USERNAME,
+                SMTP_PASSWORD,
+            )
+
+            server.send_message(message)
+
+    except smtplib.SMTPAuthenticationError as e:
+        raise Exception(f"SMTP Authentication Failed: {e}")
+
+    except smtplib.SMTPException as e:
+        raise Exception(f"SMTP Error: {e}")
+
+    except Exception as e:
+        raise Exception(f"Email sending failed: {e}")
