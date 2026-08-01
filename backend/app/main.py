@@ -9,6 +9,7 @@ from sqlalchemy import text
 from starlette import status
 
 from app.core.database import Base, SessionLocal, engine
+from app.core.email import verify_email_connection
 from app.core.logger import logger
 from app.core.security import bcrypt_context
 
@@ -54,13 +55,27 @@ async def lifespan(app: FastAPI):
     startup_time = perf_counter()
 
     try:
+        # ==========================================================
         # Check Database Connection
+        # ==========================================================
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
 
         logger.info("✅ Database Connected Successfully")
 
+        # ==========================================================
+        # Check SMTP Connection
+        # ==========================================================
+        try:
+            verify_email_connection()
+            logger.info("✅ SMTP Connected Successfully")
+
+        except Exception as e:
+            logger.exception(f"❌ SMTP Connection Failed: {e}")
+
+        # ==========================================================
         # Synchronize Database Tables
+        # ==========================================================
         Base.metadata.create_all(bind=engine)
 
         logger.info("📦 Database Tables Synchronized")
@@ -147,7 +162,9 @@ app = FastAPI(
 # ==========================================================
 # CORS Middleware
 # ==========================================================
-origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000,http://localhost:8000")
+origins = os.getenv(
+    "CORS_ORIGINS", "http://localhost:5173,http://localhost:3000,http://localhost:8000"
+)
 
 app.add_middleware(
     CORSMiddleware,

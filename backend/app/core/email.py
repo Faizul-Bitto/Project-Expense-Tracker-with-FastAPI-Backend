@@ -6,6 +6,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from jinja2 import Environment, FileSystemLoader
 
+from app.core.logger import logger
+
 load_dotenv()
 
 SMTP_HOST = os.getenv("SMTP_HOST")
@@ -40,6 +42,39 @@ def render_email_template(
     return template.render(**context)
 
 
+def verify_email_connection():
+    """
+    Verify SMTP connection during application startup.
+    """
+
+    logger.info("📧 Connecting to SMTP Server...")
+
+    with smtplib.SMTP(
+        SMTP_HOST,
+        SMTP_PORT,
+        timeout=30,
+    ) as server:
+
+        logger.info("📧 SMTP Server Connected")
+
+        server.ehlo()
+
+        logger.info("📧 EHLO Successful")
+
+        server.starttls()
+
+        logger.info("🔒 STARTTLS Enabled")
+
+        server.ehlo()
+
+        server.login(
+            SMTP_USERNAME,
+            SMTP_PASSWORD,
+        )
+
+        logger.info("🔑 SMTP Login Successful")
+
+
 def send_email(
     recipient_email: str,
     subject: str,
@@ -47,7 +82,7 @@ def send_email(
     html_body: str | None = None,
 ):
     """
-    Send an email using Brevo SMTP.
+    Send an email using SMTP.
     """
 
     message = EmailMessage()
@@ -65,6 +100,7 @@ def send_email(
         )
 
     try:
+
         with smtplib.SMTP(
             SMTP_HOST,
             SMTP_PORT,
@@ -84,11 +120,19 @@ def send_email(
 
             server.send_message(message)
 
+            logger.info(f"📨 Email sent successfully to {recipient_email}")
+
     except smtplib.SMTPAuthenticationError as e:
+        logger.exception("SMTP Authentication Failed")
+
         raise Exception(f"SMTP Authentication Failed: {e}")
 
     except smtplib.SMTPException as e:
+        logger.exception("SMTP Error")
+
         raise Exception(f"SMTP Error: {e}")
 
     except Exception as e:
+        logger.exception("Email Sending Failed")
+
         raise Exception(f"Email sending failed: {e}")
