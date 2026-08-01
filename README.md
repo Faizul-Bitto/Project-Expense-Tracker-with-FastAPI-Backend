@@ -133,14 +133,13 @@ Frontend runs at `http://localhost:5173`.
 
 ## 🔑 Default Admin
 
-On first startup, the backend automatically creates a default admin account configured in `.env`:
+On first startup, the backend automatically creates a default administrator account. The admin credentials are configured through environment variables in the backend `.env` file:
 
-| Field | Default Value |
-|---|---|
-| Email | admin@admin.com |
-| Password | admin123 |
+- `DEFAULT_ADMIN_NAME` — provide the administrator's display name
+- `DEFAULT_ADMIN_EMAIL` — provide the administrator's email address
+- `DEFAULT_ADMIN_PASSWORD` — provide a secure password for the administrator
 
-> **⚠️ Change these default credentials before deploying to production.**
+> **⚠️ Set strong custom credentials for these variables before deploying to production. Do not commit your actual `.env` file to version control.**
 
 ---
 
