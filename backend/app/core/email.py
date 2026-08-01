@@ -1,8 +1,7 @@
 import os
-import smtplib
-from email.message import EmailMessage
 from pathlib import Path
 
+import requests
 from dotenv import load_dotenv
 from jinja2 import Environment, FileSystemLoader
 
@@ -10,15 +9,11 @@ from app.core.logger import logger
 
 load_dotenv()
 
-SMTP_HOST = os.getenv("SMTP_HOST")
-SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
+BREVO_API_KEY = os.getenv("BREVO_API_KEY")
 
-SMTP_USERNAME = os.getenv("SMTP_USERNAME")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-
-SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL")
-SMTP_FROM_NAME = os.getenv(
-    "SMTP_FROM_NAME",
+EMAIL_FROM = os.getenv("EMAIL_FROM")
+EMAIL_FROM_NAME = os.getenv(
+    "EMAIL_FROM_NAME",
     "Expense Tracker",
 )
 
@@ -44,35 +39,25 @@ def render_email_template(
 
 def verify_email_connection():
     """
-    Verify SMTP connection during application startup.
+    Verify Brevo API connectivity.
     """
 
-    logger.info("📧 Connecting to SMTP Server...")
+    logger.info("📧 Verifying Brevo API...")
 
-    with smtplib.SMTP(
-        SMTP_HOST,
-        SMTP_PORT,
+    headers = {
+        "accept": "application/json",
+        "api-key": BREVO_API_KEY,
+    }
+
+    response = requests.get(
+        "https://api.brevo.com/v3/account",
+        headers=headers,
         timeout=30,
-    ) as server:
+    )
 
-        logger.info("📧 SMTP Server Connected")
+    response.raise_for_status()
 
-        server.ehlo()
-
-        logger.info("📧 EHLO Successful")
-
-        server.starttls()
-
-        logger.info("🔒 STARTTLS Enabled")
-
-        server.ehlo()
-
-        server.login(
-            SMTP_USERNAME,
-            SMTP_PASSWORD,
-        )
-
-        logger.info("🔑 SMTP Login Successful")
+    logger.info("✅ Brevo API Connected Successfully")
 
 
 def send_email(
@@ -82,57 +67,41 @@ def send_email(
     html_body: str | None = None,
 ):
     """
-    Send an email using SMTP.
+    Send email using Brevo API.
     """
 
-    message = EmailMessage()
+    headers = {
+        "accept": "application/json",
+        "api-key": BREVO_API_KEY,
+        "content-type": "application/json",
+    }
 
-    message["From"] = f"{SMTP_FROM_NAME} <{SMTP_FROM_EMAIL}>"
-    message["To"] = recipient_email
-    message["Subject"] = subject
-
-    message.set_content(body)
+    payload = {
+        "sender": {
+            "name": EMAIL_FROM_NAME,
+            "email": EMAIL_FROM,
+        },
+        "to": [
+            {
+                "email": recipient_email,
+            }
+        ],
+        "subject": subject,
+        "textContent": body,
+    }
 
     if html_body:
-        message.add_alternative(
-            html_body,
-            subtype="html",
-        )
+        payload["htmlContent"] = html_body
 
-    try:
+    response = requests.post(
+        "https://api.brevo.com/v3/smtp/email",
+        headers=headers,
+        json=payload,
+        timeout=30,
+    )
 
-        with smtplib.SMTP(
-            SMTP_HOST,
-            SMTP_PORT,
-            timeout=30,
-        ) as server:
+    if response.status_code >= 400:
+        logger.error(response.text)
+        raise Exception(f"Brevo Error {response.status_code}: {response.text}")
 
-            server.ehlo()
-
-            server.starttls()
-
-            server.ehlo()
-
-            server.login(
-                SMTP_USERNAME,
-                SMTP_PASSWORD,
-            )
-
-            server.send_message(message)
-
-            logger.info(f"📨 Email sent successfully to {recipient_email}")
-
-    except smtplib.SMTPAuthenticationError as e:
-        logger.exception("SMTP Authentication Failed")
-
-        raise Exception(f"SMTP Authentication Failed: {e}")
-
-    except smtplib.SMTPException as e:
-        logger.exception("SMTP Error")
-
-        raise Exception(f"SMTP Error: {e}")
-
-    except Exception as e:
-        logger.exception("Email Sending Failed")
-
-        raise Exception(f"Email sending failed: {e}")
+    logger.info(f"📨 Email sent successfully to {recipient_email}")

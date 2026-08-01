@@ -64,14 +64,15 @@ async def lifespan(app: FastAPI):
         logger.info("✅ Database Connected Successfully")
 
         # ==========================================================
-        # Check SMTP Connection
+        # Check Brevo API Connection
         # ==========================================================
         try:
             verify_email_connection()
-            logger.info("✅ SMTP Connected Successfully")
+
+            logger.info("✅ Brevo API Connected Successfully")
 
         except Exception as e:
-            logger.exception(f"❌ SMTP Connection Failed: {e}")
+            logger.exception(f"❌ Brevo API Connection Failed: {e}")
 
         # ==========================================================
         # Synchronize Database Tables
